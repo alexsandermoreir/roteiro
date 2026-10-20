@@ -8,6 +8,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="robots" content="noindex">
 <title>Roteiros Japão 2026</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icone-180.png">
+<link rel="icon" href="icone-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
@@ -39,7 +42,8 @@ a{color:inherit}
 .muted{color:var(--muted)}
 
 /* Início */
-.top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:20px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.flags{margin-bottom:18px}
 .top h1{font-size:28px;font-weight:700;letter-spacing:-.02em;margin:0}
 .flags{display:flex;gap:6px}
 .flag{height:36px;min-width:44px;padding:0 10px;border-radius:18px;font-size:18px;border:1px solid var(--hair);background:var(--surface)}
@@ -181,6 +185,43 @@ details.map[open] summary::after{content:"−"}
 .done .th{opacity:.45}
 .ph[data-wkb]{min-height:120px}
 .credit{display:block;font-size:12px;color:var(--muted);margin:-6px 0 10px;text-decoration:none}
+.tools{display:flex;gap:2px;flex:none}
+.iconbtn{width:40px;height:40px;border-radius:20px;display:grid;place-items:center;color:var(--muted)}
+.iconbtn[aria-pressed="true"]{color:var(--accent);background:var(--soft)}
+.bar-total+.tools{margin-left:4px}
+.bar-total:empty+.tools{margin-left:auto}
+.btn.edit{border-style:dashed}
+.jaov.sheetmode{place-items:start center;overflow-y:auto;text-align:left}
+.sheet .set{border-top:1px solid var(--hair);padding:14px 0}
+.sheet .lbl{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.hint.left{text-align:left;margin:0 0 10px;display:block}
+.seg{display:flex;border:1px solid var(--hair);border-radius:12px;overflow:hidden}
+.seg button{flex:1;height:42px;font-size:14px;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.tog{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:15px}
+.tog input{width:22px;height:22px;accent-color:var(--accent)}
+.vrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--hair)}
+.vrow:last-of-type{margin-bottom:14px}
+.vtag{font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px;color:#fff;background:#111}
+.vtag.ig{background:#C13584}
+.vname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;max-width:calc(100% - 32px);
+  background:var(--fg);color:var(--bg);border-radius:14px;padding:12px 16px;font-size:14px;display:flex;gap:14px;align-items:center;box-shadow:0 6px 24px rgba(0,0,0,.18)}
+.toast button{font-weight:700;color:inherit;text-decoration:underline}
+.gtabs{margin:16px 0 14px}
+.gtabs button{font-size:13px}
+.cnt{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;margin-left:6px;border-radius:9px;background:var(--soft);color:var(--accent);font-size:11px;font-weight:700;vertical-align:1px}
+.gtabs button[aria-pressed="true"] .cnt{background:var(--bg);color:var(--fg)}
+.gcard{background:var(--bg);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.gcard p{margin:0;font-size:15px}
+.gcard .ph{margin-bottom:10px}
+.maplink{display:inline-block;margin-top:8px;font-size:14px;font-weight:600}
+.gx{display:block;margin-top:8px;font-size:13px;color:var(--muted);text-decoration:underline}
+.pact .gx{display:inline;margin:0}
+.empty{color:var(--muted);font-size:15px;margin:6px 0 14px}
+.gform{display:grid;gap:8px;border-top:1px dashed var(--hair);padding-top:14px;margin-top:6px}
+.field.area{height:auto;padding:12px 14px;font-family:var(--sans);resize:vertical}
+.guidebtn{margin-top:10px;gap:8px}
 .alldone{text-align:center;padding:8px 0}
 @media (prefers-reduced-motion:no-preference){.day{animation:in .18s ease-out}@keyframes in{from{opacity:.4;transform:translateY(4px)}}}
 </style>
@@ -190,8 +231,8 @@ details.map[open] summary::after{content:"−"}
 
 <div class="wrap" id="app"></div>
 <div class="jaov" id="jaov" hidden role="dialog" aria-modal="true"></div>
+<div class="toast" id="toast" hidden role="status"></div>
 
-<script src="dados.js"></script>
 <script>
 /* utilidades */
 const $=s=>document.querySelector(s);
@@ -253,61 +294,223 @@ function wiki(it){const term=wikiFor(it);if(!term)return Promise.resolve(null);i
   return pend[term]}
 const wikiOf=it=>{const t=wikiFor(it);return t&&WK[t]?WK[t]:null};
 const waiting=it=>{const t=wikiFor(it);return !!t&&!(t in WK)};
-const photoOf=(k,it)=>photos[k]||it.img||(wikiOf(it)||{}).src||null;
+const photoOf=(k,it)=>photos[k]||ED.fotos[k]||it.img||(wikiOf(it)||{}).src||null;
+const vidsOf=(k,it)=>[...(it.vids||[]).filter(v=>!(ED.ocultos[k]||[]).includes(v[1])),...(ED.videos[k]||[])];
 const tileTxt=it=>esc(((it.home?"家":(it.ja||it.n)).replace(/^(Apple|THE|A PIT|MEGA|SHIBUYA|GINZA|Nintendo|ユニクロ)\s*/,"")).slice(0,2));
-const coverOf=c=>photos["capa-"+c.id]||c.cover||null;
+const coverOf=c=>photos["capa-"+c.id]||ED.capas[c.id]||c.cover||null;
 function shrink(blob){return new Promise(res=>{const u=URL.createObjectURL(blob),im=new Image();
   im.onload=()=>{const m=1400,r=Math.min(1,m/Math.max(im.width,im.height)),cv=document.createElement("canvas");cv.width=Math.round(im.width*r);cv.height=Math.round(im.height*r);
     cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(u);cv.toBlob(b=>res(b||blob),"image/jpeg",.84)};
   im.onerror=()=>{URL.revokeObjectURL(u);res(null)};im.src=u})}
-function editPhoto(k,name,rerender){
-  const o=$("#jaov");let cur=photos[k];
-  const close=()=>{o.hidden=true;document.removeEventListener("paste",onPaste);rerender()};
-  const setBlob=async b=>{msg("Preparando a imagem…");const sb=await shrink(b);if(!sb)return msg("Esse arquivo não é uma imagem que eu consiga abrir.");
-    DB.put(k,{blob:sb});if(photos[k]&&photos[k].startsWith("blob:"))URL.revokeObjectURL(photos[k]);photos[k]=URL.createObjectURL(sb);close()};
-  const setLink=u=>{u=u.trim();if(!/^https?:\/\//.test(u))return msg("Cole um link que comece com http.");msg("Abrindo o link…");
-    const im=new Image();im.onload=()=>{DB.put(k,{url:u});photos[k]=u;close()};im.onerror=()=>msg("Não consegui abrir essa imagem. Use o link direto da foto, de preferência terminando em .jpg, .png ou .webp.");im.src=u};
-  const onPaste=e=>{const items=[...(e.clipboardData||{}).items||[]];const img=items.find(x=>x.type.startsWith("image/"));
-    if(img){e.preventDefault();setBlob(img.getAsFile());return}
-    const txt=e.clipboardData.getData("text");if(txt&&e.target.id!=="purl"){e.preventDefault();setLink(txt)}};
-  o.innerHTML=`<div class="sheet" role="document"><div class="eyebrow">Foto</div><h3>${esc(name)}</h3>
-    ${cur||""?`<img class="ph" src="${esc(cur)}" alt="">`:""}
+/* edições compartilhadas: edicoes.json no GitHub; sem token, ficam neste aparelho */
+const REPO="alexsandermoreir/roteiro";
+const tok=()=>{try{return localStorage.getItem("gh-token")||""}catch(e){return ""}};
+let ED={capas:{},fotos:{},videos:{},ocultos:{},guia:{}},ED_TEXT="",DATA_TEXT="";
+const norm=e=>({capas:e.capas||{},fotos:e.fotos||{},videos:e.videos||{},ocultos:e.ocultos||{},guia:e.guia||{}});
+const localOps=()=>store.get("ed-ops")||[];
+function applyOp(e,o){
+  if(o.t==="capa"){if(o.url)e.capas[o.c]=o.url;else delete e.capas[o.c]}
+  if(o.t==="foto"){if(o.url)e.fotos[o.k]=o.url;else delete e.fotos[o.k]}
+  if(o.t==="vid+"){e.videos[o.k]=(e.videos[o.k]||[]).filter(x=>x[1]!==o.v[1]).concat([o.v]);e.ocultos[o.k]=(e.ocultos[o.k]||[]).filter(x=>x!==o.v[1])}
+  if(o.t==="vid-"){const l=e.videos[o.k]||[];if(l.some(x=>x[1]===o.id))e.videos[o.k]=l.filter(x=>x[1]!==o.id);else e.ocultos[o.k]=[...(e.ocultos[o.k]||[]),o.id]}
+  if(o.t==="g+"){const g=e.guia[o.k]=e.guia[o.k]||{};g[o.kind]=(g[o.kind]||[]).concat([o.v])}
+  if(o.t==="g-"){const g=e.guia[o.k]||{},l=g[o.kind]||[];if(l.some(x=>x.id===o.id))g[o.kind]=l.filter(x=>x.id!==o.id);else e.ocultos[o.k]=[...(e.ocultos[o.k]||[]),o.id]}
+  return e}
+async function loadEd(){
+  try{const r=await fetch("edicoes.json?v="+Date.now());ED_TEXT=r.ok?await r.text():"{}"}catch(e){ED_TEXT=ED_TEXT||"{}"}
+  let e;try{e=norm(JSON.parse(ED_TEXT))}catch(x){e=norm({})}
+  localOps().forEach(o=>applyOp(e,o));ED=e}
+const b64=str=>btoa(unescape(encodeURIComponent(str)));
+const unb64=b=>decodeURIComponent(escape(atob(b.replace(/\n/g,""))));
+const gh=(path,method,body)=>fetch(`https://api.github.com/repos/${REPO}/contents/${path}`,{method:method||"GET",cache:"no-store",
+  headers:{Authorization:"Bearer "+tok(),Accept:"application/vnd.github+json"},body:body?JSON.stringify(body):undefined});
+async function pushOps(ops){
+  for(let i=0;i<2;i++){
+    const r=await gh("edicoes.json");let remote={},sha;
+    if(r.ok){const j=await r.json();sha=j.sha;try{remote=JSON.parse(unb64(j.content))}catch(e){}}else if(r.status!==404)throw new Error(r.status);
+    remote=norm(remote);ops.forEach(o=>applyOp(remote,o));
+    const p=await gh("edicoes.json","PUT",{message:"Edição do roteiro pelo app",content:b64(JSON.stringify(remote,null,1)),sha});
+    if(p.ok)return;if(p.status!==409&&p.status!==422)throw new Error(p.status)}
+  throw new Error("conflito")}
+async function saveOps(ops){
+  ops.forEach(o=>applyOp(ED,o));
+  if(!tok()){store.set("ed-ops",[...localOps(),...ops]);toast("Salvo neste aparelho. Para o grupo ver, ative o GitHub nos ajustes.");return}
+  try{await pushOps(ops);toast("Salvo para o grupo. Aparece para todos em cerca de 1 minuto.")}
+  catch(e){store.set("ed-ops",[...localOps(),...ops]);toast("Não consegui salvar no GitHub. Ficou guardado neste aparelho.")}}
+async function flushLocal(){const ops=localOps();if(!ops.length||!tok())return;try{await pushOps(ops);store.set("ed-ops",[]);toast("Edições deste aparelho enviadas para o grupo.")}catch(e){}}
+async function uploadImg(blob,k){
+  const data=await new Promise(r=>{const f=new FileReader();f.onload=()=>r(String(f.result).split(",")[1]);f.readAsDataURL(blob)});
+  const name="fotos/"+k.normalize("NFD").replace(/[^\w]+/g,"-").replace(/^-|-$/g,"").toLowerCase().slice(0,60)+"-"+Date.now().toString(36)+".jpg";
+  const p=await gh(name,"PUT",{message:"Foto do roteiro",content:data});if(!p.ok)throw new Error(p.status);return name}
+const opFor=(k,url)=>k.startsWith("capa-")?{t:"capa",c:k.slice(5),url}:{t:"foto",k,url};
+
+function sheet(html,onClose){const o=$("#jaov");o.className="jaov sheetmode";o.innerHTML=`<div class="sheet" role="document">${html}</div>`;o.hidden=false;
+  const close=()=>{o.hidden=true;o.className="jaov";onClose&&onClose()};o.onclick=e=>{if(e.target===o)close()};o.scrollTop=0;return close}
+let toastT;function toast(t,act){const el=$("#toast");el.innerHTML=`<span>${esc(t)}</span>${act?`<button id="tact">${esc(act[0])}</button>`:""}`;el.hidden=false;
+  if(act)$("#tact").onclick=()=>{el.hidden=true;act[1]()};clearTimeout(toastT);toastT=setTimeout(()=>el.hidden=true,act?9000:4500)}
+const rerender=()=>view.city?city():home();
+function reloadApp(){const h=location.hash;location.replace(location.pathname+"?v="+Date.now()+h)}
+
+function editPhoto(k,name,after){
+  let cur=photos[k]||(k.startsWith("capa-")?ED.capas[k.slice(5)]:ED.fotos[k]);
+  const close=sheet(`<div class="eyebrow">${k.startsWith("capa-")?"Capa":"Foto"}</div><h3>${esc(name)}</h3>
+    ${cur?`<img class="ph" src="${esc(cur)}" alt="">`:""}
     <label class="btn go wide" for="pfile">Escolher da galeria</label><input id="pfile" type="file" accept="image/*" hidden>
     <div class="or">ou cole a imagem ou o link aqui</div>
     <div class="linkrow"><input id="purl" class="field" type="url" inputmode="url" placeholder="https://…" autocomplete="off"><button class="btn" id="pok">Usar</button></div>
     <div class="pmsg" id="pmsg" aria-live="polite"></div>
     <div class="acts">${cur?`<button class="btn" id="pdel">Remover</button>`:""}<button class="btn" id="pclose" style="margin-left:auto">Fechar</button></div>
-    <div class="hint">A foto fica salva só neste aparelho.</div></div>`;
-  function msg(t){$("#pmsg").textContent=t}
-  o.hidden=false;o.onclick=e=>{if(e.target===o)close()};
+    <div class="hint">${tok()?"Fica visível para todo o grupo.":"Fica salva só neste aparelho. Ative o GitHub nos ajustes para o grupo ver."}</div>`,()=>{document.removeEventListener("paste",onPaste);after()});
+  const msg=t=>$("#pmsg").textContent=t;
+  const dropLocal=()=>{DB.del(k);if(photos[k]&&photos[k].startsWith("blob:"))URL.revokeObjectURL(photos[k]);delete photos[k]};
+  const setBlob=async b=>{msg("Preparando a imagem…");const sb=await shrink(b);if(!sb)return msg("Esse arquivo não é uma imagem que eu consiga abrir.");
+    dropLocal();DB.put(k,{blob:sb});photos[k]=URL.createObjectURL(sb);
+    if(tok()){msg("Enviando para o grupo…");try{const path=await uploadImg(sb,k);await saveOps([opFor(k,path)])}catch(e){toast("Não consegui enviar a foto. Ficou salva neste aparelho.")}}
+    close()};
+  const setLink=u=>{u=u.trim();if(!/^https?:\/\//.test(u))return msg("Cole um link que comece com http.");msg("Abrindo o link…");
+    const im=new Image();im.onload=async()=>{dropLocal();await saveOps([opFor(k,u)]);close()};
+    im.onerror=()=>msg("Não consegui abrir essa imagem. Use o link direto da foto, de preferência terminando em .jpg, .png ou .webp.");im.src=u};
+  function onPaste(e){const items=[...((e.clipboardData||{}).items||[])];const img=items.find(x=>x.type.startsWith("image/"));
+    if(img){e.preventDefault();setBlob(img.getAsFile());return}
+    const txt=e.clipboardData.getData("text");if(txt&&e.target.id!=="purl"){e.preventDefault();setLink(txt)}}
   document.addEventListener("paste",onPaste);
   $("#pfile").onchange=e=>{const f=e.target.files[0];if(f)setBlob(f)};
   $("#pok").onclick=()=>setLink($("#purl").value);
   $("#purl").onkeydown=e=>{if(e.key==="Enter")setLink(e.target.value)};
   $("#pclose").onclick=close;
-  if(cur)$("#pdel").onclick=()=>{DB.del(k);delete photos[k];close()};
+  if(cur)$("#pdel").onclick=async()=>{dropLocal();await saveOps([opFor(k,null)]);close()};
 }
 
+async function parseVideo(u){
+  u=u.trim();let m=u.match(/instagram\.com\/(?:[^/?#]+\/)?(?:reel|reels|p|tv)\/([\w-]+)/);if(m)return {v:["ig",m[1]]};
+  if(!/tiktok\.com/.test(u))return {err:"Cole um link do TikTok ou do Instagram."};
+  m=u.match(/\/(?:video|photo)\/(\d{8,})/);let title="";
+  try{const j=await (await fetch("https://www.tiktok.com/oembed?url="+encodeURIComponent(u))).json();
+    title=j.author_name?"@"+j.author_name:"";if(!m){const x=(j.html||"").match(/data-video-id="(\d+)"/);if(x)m=[0,x[1]]}}catch(e){}
+  if(!m)return {err:"Não consegui ler esse link curto. Abra o vídeo no navegador e copie o endereço completo."};
+  return {v:["tt",m[1]],title}}
+/* Guia do lugar: vídeos, photo spots, poses e notas */
+const KINDS=[["videos","Vídeos"],["spots","Spots"],["poses","Poses"],["notas","Notas"]];
+function guideData(c,it,k){
+  const base=(typeof GUIA!=="undefined"&&GUIA[c.id+"|"+it.n])||{},hid=ED.ocultos[k]||[],ex=ED.guia[k]||{};
+  const pick=kind=>[...(base[kind]||[]).map((x,i)=>({...x,id:"b"+kind[0]+i})),...(ex[kind]||[])].filter(x=>!hid.includes(x.id));
+  return {videos:vidsOf(k,it),spots:pick("spots"),poses:pick("poses"),notas:pick("notas")}}
+const gCount=g=>g.videos.length+g.spots.length+g.poses.length+g.notas.length;
+const mapsAt=p=>`https://www.google.com/maps/search/?api=1&query=${p[0]},${p[1]}`;
+function parseCoords(u){if(!u)return null;const m=u.match(/(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);return m?[+m[1],+m[2]]:null}
+function guide(c,it,k,name,startTab){
+  let g=guideData(c,it,k),tab=startTab||(KINDS.find(([id])=>g[id].length)||KINDS[0])[0],playing=null;
+  const ed=()=>view.edit;
+  const rm=(kind,id)=>ed()?`<button class="gx" data-gdel="${kind}:${id}" aria-label="Remover">Remover</button>`:"";
+  const empty=()=>`<p class="empty">Nada aqui ainda.${ed()?"":" Toque no lápis para adicionar."}</p>`;
+  const img=x=>x.img?`<img class="ph" src="${esc(x.img)}" alt="" loading="lazy">`:"";
+  function body(){
+    const L=g[tab];let h="";
+    if(tab==="videos"){
+      h=L.length?`<div class="vids">${L.map(([p,id,title])=>{const url=p==="tt"?`https://www.tiktok.com/@/video/${id}`:`https://www.instagram.com/reel/${id}/`;
+        const inner=playing===id?`<div class="player ${p}"><iframe src="${p==="tt"?`https://www.tiktok.com/player/v1/${id}?description=0&music_info=0&rel=0`:`https://www.instagram.com/reel/${id}/embed`}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen title="${esc(title||"")}"></iframe></div>`
+          :`<button class="vtile ${p}" data-play="${id}"><span class="plat">${p==="tt"?"TikTok":"Reels"}</span><span class="play" aria-hidden="true"></span><span class="vt">${esc(title||"")}</span></button>`;
+        return `<div class="vslide">${inner}<div class="pact"><a href="${url}" target="_blank" rel="noopener">Abrir no app ↗</a>${ed()?`<button class="gx" data-vdel="${id}">Remover</button>`:""}</div></div>`}).join("")}</div>${L.length>1?`<div class="hint left">Arraste para o lado para ver os outros.</div>`:""}`:empty();
+      if(ed())h+=`<div class="gform"><input id="gurl" class="field" type="url" inputmode="url" placeholder="Link do TikTok ou do Reels" autocomplete="off">
+        <input id="gtit" class="field" type="text" placeholder="Título curto (opcional)" autocomplete="off"><button class="btn go" id="gadd">Adicionar vídeo</button></div>`;
+    }else{
+      h=L.length?L.map(x=>`<div class="gcard">${img(x)}<p>${esc(x.t)}</p>${x.p?`<a class="maplink" href="${mapsAt(x.p)}" target="_blank" rel="noopener">Abrir no mapa ↗</a>`:""}${rm(tab,x.id)}</div>`).join(""):empty();
+      if(ed())h+=`<div class="gform"><textarea id="gtxt" class="field area" rows="3" placeholder="${tab==="spots"?"Onde fica o melhor ângulo":tab==="poses"?"Descreva a pose":"Escreva a nota"}"></textarea>
+        ${tab!=="notas"?`<input id="gimg" class="field" type="url" inputmode="url" placeholder="Link de uma imagem de referência (opcional)" autocomplete="off">
+        ${tok()?`<label class="btn sm" for="gfile">Ou escolher imagem da galeria</label><input id="gfile" type="file" accept="image/*" hidden>`:""}`:""}
+        ${tab==="spots"?`<input id="gpos" class="field" type="text" placeholder="Coordenadas ou link do Google Maps (opcional)" autocomplete="off">`:""}
+        <button class="btn go" id="gadd">Adicionar</button></div>`;
+    }
+    return h+`<div class="pmsg" id="pmsg" aria-live="polite"></div>`}
+  const draw=()=>`<div class="eyebrow">Guia do lugar</div><h3>${esc(name)}</h3>${it.ja?`<div class="jn ja muted">${esc(it.ja)}</div>`:""}
+    <div class="seg gtabs">${KINDS.map(([id,l])=>`<button data-tab="${id}" aria-pressed="${tab===id}">${l}${g[id].length?`<span class="cnt">${g[id].length}</span>`:""}</button>`).join("")}</div>
+    <div class="gbody">${body()}</div>
+    <div class="acts"><button class="btn" id="pclose" style="margin-left:auto">Fechar</button></div>`;
+  const close=sheet(draw(),city);
+  let fileBlob=null;
+  const redraw=()=>{g=guideData(c,it,k);$(".sheet").innerHTML=draw();bind()};
+  const msg=t=>$("#pmsg").textContent=t;
+  function bind(){
+    $("#pclose").onclick=close;
+    document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{tab=b.dataset.tab;playing=null;redraw()});
+    document.querySelectorAll("[data-play]").forEach(b=>b.onclick=()=>{playing=b.dataset.play;redraw()});
+    document.querySelectorAll("[data-vdel]").forEach(b=>b.onclick=async()=>{await saveOps([{t:"vid-",k,id:b.dataset.vdel}]);redraw()});
+    document.querySelectorAll("[data-gdel]").forEach(b=>b.onclick=async()=>{const [kind,id]=b.dataset.gdel.split(":");await saveOps([{t:"g-",k,kind,id}]);redraw()});
+    const f=$("#gfile");if(f)f.onchange=e=>{fileBlob=e.target.files[0]||null;if(fileBlob)msg("Imagem escolhida: "+fileBlob.name)};
+    const add=$("#gadd");if(!add)return;
+    add.onclick=async()=>{
+      if(tab==="videos"){const u=$("#gurl").value;if(!u.trim())return;msg("Lendo o link…");const r=await parseVideo(u);if(r.err)return msg(r.err);
+        await saveOps([{t:"vid+",k,v:[...r.v,$("#gtit").value.trim()||r.title||(r.v[0]==="tt"?"TikTok":"Reels")]}]);return redraw()}
+      const t=$("#gtxt").value.trim();if(!t)return msg("Escreva um texto curto.");
+      const v={id:"e"+Date.now().toString(36),t};
+      const il=$("#gimg")&&$("#gimg").value.trim();if(il){if(!/^https?:\/\//.test(il))return msg("O link da imagem precisa começar com http.");v.img=il}
+      if(fileBlob&&tok()){msg("Enviando a imagem…");try{const sb=await shrink(fileBlob);v.img=await uploadImg(sb,k+"-"+tab)}catch(e){return msg("Não consegui enviar a imagem.")}}
+      const pos=$("#gpos")&&parseCoords($("#gpos").value);if(pos)v.p=pos;
+      await saveOps([{t:"g+",k,kind:tab,v}]);fileBlob=null;redraw()};
+  }
+  bind();
+}
+
+function settings(){
+  const theme=store.get("tema")||"auto",c=view.city;
+  const close=sheet(`<div class="eyebrow">Ajustes</div><h3>Roteiros</h3>
+    <div class="set"><div class="lbl">Aparência</div><div class="seg">${[["auto","Automático"],["light","Claro"],["dark","Escuro"]].map(([v,l])=>`<button data-th="${v}" aria-pressed="${theme===v}">${l}</button>`).join("")}</div></div>
+    <div class="set"><div class="lbl">Roteiro</div><button class="btn wide" id="sref">Atualizar agora</button>
+      <div class="hint left">Busca a versão mais recente sem sair do app.</div></div>
+    <div class="set"><div class="lbl">Edição</div>
+      <label class="tog"><span>Mostrar botões de edição</span><input type="checkbox" id="sedit"${view.edit?" checked":""}></label></div>
+    <div class="set"><div class="lbl">Compartilhar edições com o grupo</div>
+      <div class="hint left">${tok()?"Ativo. Capas, fotos e vídeos que você adicionar aparecem para todos.":"Cole um token do GitHub com permissão de escrita só no repositório roteiro. Ele fica guardado apenas neste aparelho."}</div>
+      <div class="linkrow"><input id="stok" class="field" type="password" placeholder="${tok()?"Token salvo":"github_pat_…"}" autocomplete="off"><button class="btn" id="stoksave">${tok()?"Trocar":"Salvar"}</button></div>
+      ${tok()?`<button class="btn sm" id="stokdel" style="margin-top:8px">Remover token</button>`:`<a class="hint left" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Criar token no GitHub ↗</a>`}
+      ${localOps().length?`<div class="hint left">${localOps().length} edição(ões) guardada(s) só neste aparelho.</div>`:""}</div>
+    ${c?`<div class="set"><div class="lbl">Endereço da hospedagem em ${esc(c.name)}</div>
+      <div class="linkrow"><input id="saddr" class="field" placeholder="Cole o endereço" autocomplete="off" value="${esc(addr())}"><button class="btn" id="saddrok">Salvar</button></div></div>`:""}
+    <div class="set"><div class="lbl">Limpar</div><div class="acts" style="flex-wrap:wrap;margin-top:0">
+      <button class="btn sm" id="sdone">Desmarcar paradas feitas</button><button class="btn sm" id="sphotos">Apagar fotos deste aparelho</button></div></div>
+    <div class="acts"><button class="btn" id="pclose" style="margin-left:auto">Fechar</button></div>`,rerender);
+  document.querySelectorAll("[data-th]").forEach(b=>b.onclick=()=>{store.set("tema",b.dataset.th);applyTheme();document.querySelectorAll("[data-th]").forEach(x=>x.setAttribute("aria-pressed",x===b))});
+  $("#sref").onclick=reloadApp;
+  $("#sedit").onchange=e=>{view.edit=e.target.checked;store.set("edit",view.edit)};
+  $("#stoksave").onclick=async()=>{const v=$("#stok").value.trim();if(!v)return;
+    const r=await fetch(`https://api.github.com/repos/${REPO}`,{headers:{Authorization:"Bearer "+v}}).catch(()=>null);
+    if(!r||!r.ok){toast("Esse token não abriu o repositório. Confira a permissão.");return}
+    const j=await r.json();if(j.permissions&&!j.permissions.push){toast("O token precisa de permissão de escrita em Contents.");return}
+    try{localStorage.setItem("gh-token",v)}catch(e){}close();toast("GitHub ativado.");flushLocal()};
+  if(tok())$("#stokdel").onclick=()=>{try{localStorage.removeItem("gh-token")}catch(e){}close();toast("Token removido deste aparelho.")};
+  if(c)$("#saddrok").onclick=()=>{const v=$("#saddr").value.trim();try{v?localStorage.setItem("endereco-"+c.id,v):localStorage.removeItem("endereco-"+c.id)}catch(e){}toast("Endereço salvo neste aparelho.")};
+  $("#sdone").onclick=()=>{done={};store.set("feito",done);toast("Paradas desmarcadas.")};
+  $("#sphotos").onclick=()=>{Object.keys(photos).forEach(k=>DB.del(k));for(const k in photos)delete photos[k];toast("Fotos deste aparelho apagadas.")};
+  $("#pclose").onclick=close;
+}
+function applyTheme(){const t=store.get("tema")||"auto",r=document.documentElement;if(t==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",t)}
+const ICON={
+  gear:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>`,
+  pen:`<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`};
+const tools=()=>`<div class="tools"><button class="iconbtn" id="tedit" aria-pressed="${!!view.edit}" aria-label="Editar">${ICON.pen}</button><button class="iconbtn" id="tset" aria-label="Ajustes">${ICON.gear}</button></div>`;
+function bindTools(){$("#tedit").onclick=()=>{view.edit=!view.edit;store.set("edit",view.edit);rerender();if(view.edit)toast(view.city?"Abra uma parada: Foto troca a imagem e Guia recebe vídeos, spots, poses e notas.":"Toque em Capa para trocar a foto de uma cidade.")};$("#tset").onclick=settings}
+
 /* estado */
-let view={city:null,day:0,open:null,filter:"all",vid:null};
+let view={city:null,day:0,open:null,filter:"all",vid:null,edit:!!store.get("edit")};
 
 function home(){
   const fl=[["all","Todos"],...[...new Set(TRIP.cities.map(c=>c.flag))].map(f=>[f,f])];
   const cities=TRIP.cities.filter(c=>view.filter==="all"||c.flag===view.filter);
   $("#app").innerHTML=`
-   <div class="top"><h1>Japão 2026</h1>
-    <div class="flags">${fl.map(([v,l])=>`<button class="flag${v==="all"?" txt":""}" aria-pressed="${view.filter===v}" data-f="${v}">${l}</button>`).join("")}</div></div>
+   <div class="top"><h1>Japão 2026</h1>${tools()}</div>
+    <div class="flags">${fl.map(([v,l])=>`<button class="flag${v==="all"?" txt":""}" aria-pressed="${view.filter===v}" data-f="${v}">${l}</button>`).join("")}</div>
    <div class="cities">${cities.map(c=>c.days?`
     <div class="city${coverOf(c)?" has":""}" data-c="${c.id}" role="button" tabindex="0">${coverOf(c)?`<img class="cimg" src="${esc(coverOf(c))}" alt="">`:""}<span class="kanji">${c.kanji}</span>
      <div class="name">${c.flag} ${esc(c.name)}</div><div class="dates">${c.dates}</div>
      <div class="stat">${c.days.length>1?c.days.length+" dias":"1 dia"}${cityFare(c)?`, ${money(cityFare(c),c)} em transporte`:""}</div>
-     <button class="cover-edit" data-cover="${c.id}">Foto</button></div>`:`
+     ${view.edit?`<button class="cover-edit" data-cover="${c.id}">Capa</button>`:""}</div>`:`
     <div class="city soon"><span class="kanji ja">${c.kanji}</span>
      <div class="name" style="font-size:20px">${c.flag} ${esc(c.name)}</div><div class="dates muted">${c.dates}</div>
      <div class="stat">Roteiro em breve</div></div>`).join("")}</div>`;
   document.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{view.filter=b.dataset.f;home()});
   document.querySelectorAll("[data-c]").forEach(b=>{b.onclick=e=>{if(!e.target.closest(".cover-edit"))openCity(b.dataset.c)};b.onkeydown=e=>{if(e.key==="Enter")openCity(b.dataset.c)}});
   document.querySelectorAll("[data-cover]").forEach(b=>b.onclick=()=>{const c=TRIP.cities.find(x=>x.id===b.dataset.cover);editPhoto("capa-"+c.id,c.name,home)});
+  bindTools();
 }
 
 function openCity(id,dayIdx){
@@ -322,12 +525,12 @@ function city(){
   const c=view.city,day=c.days[view.day],today=jstToday();
   store.set("dia-"+c.id,view.day);
   const D=dt(day.d);
-  const key=i=>`${day.d}-${i}`;
+  const key=i=>`${c.id}-${day.d}-${i}`,ek=it=>`${c.id}|${day.d}|${it.home?"home":it.n}`;
   const nextIdx=day.items.findIndex((it,i)=>isStop(it)&&!done[key(i)]);
   const fare=dayFare(day),alt=day.items.find(i=>i.alt);
   const missing=legs(day).some(l=>l.m==="t"&&l.fare==null);
 
-  let tl="";
+  let tl="",nv=0;
   if(day.start)tl+=row("home",`<div class="stop"><div class="n">${esc(c.home.n)}</div><div class="t">${day.depart?esc(day.depart):"Saída"}</div></div>`,"家");
   else if(day.depart)tl+=note(day.depart);
   day.items.forEach((it,i)=>{
@@ -337,7 +540,7 @@ function city(){
     const n=it.home?c.home.n:it.n,isDone=!!done[key(i)],num=day.items.slice(0,i+1).filter(x=>x.n).length;
     const open=view.open===i;
     tl+=`<li class="row${isDone?" done":""}"><div class="rail"><div class="dot${it.home?" home":""}${i===nextIdx?" next":""}">${it.home?"家":num}</div></div>
-      <div><div class="srow"><button class="stop" data-o="${i}" aria-expanded="${open}"><div class="n">${esc(n)}</div>${it.time||it.info||it.vids?`<div class="t">${esc([it.time,it.info,it.vids?(it.vids.length>1?it.vids.length+" vídeos":"1 vídeo"):""].filter(Boolean).join(", "))}</div>`:""}</button>${open?"":thumb(i,it)}</div>
+      <div><div class="srow"><button class="stop" data-o="${i}" aria-expanded="${open}"><div class="n">${esc(n)}</div>${(nv=it.home?0:gCount(guideData(c,it,ek(it))),it.time||it.info||nv)?`<div class="t">${esc([it.time,it.info,nv?`Guia com ${nv} ${nv>1?"itens":"item"}`:""].filter(Boolean).join(", "))}</div>`:""}</button>${open?"":thumb(i,it)}</div>
       ${open?detail(it,i,isDone):""}</div></li>`;
   });
   if(day.end){tl+=legRow(day.end);tl+=row("home",`<div class="stop"><div class="n">${esc(c.home.n)}</div><div class="t">Fim do dia</div></div>`,"家")}
@@ -350,12 +553,13 @@ function city(){
      ${nx.note?`<p>${esc(nx.note)}</p>`:""}
      <div class="acts"><a class="btn go" href="${goURL(nx)}" target="_blank" rel="noopener">Ir</a>
       <button class="btn" data-ja="${nextIdx}" aria-label="Mostrar no idioma local">${c.lang}</button>
-      <button class="btn" data-d="${nextIdx}">Feito</button></div></section>`
+      <button class="btn" data-d="${nextIdx}">Feito</button></div>
+     ${!nx.home&&gCount(guideData(c,nx,ek(nx)))?`<button class="btn wide guidebtn" data-g="${nextIdx}">Guia do lugar<span class="cnt">${gCount(guideData(c,nx,ek(nx)))}</span></button>`:""}</section>`
    :`<section class="focus alldone"><div class="eyebrow">Dia concluído</div><p>Todas as paradas foram marcadas.</p></section>`;
 
   $("#app").innerHTML=`
    <div class="bar"><div class="bar-row"><button class="back" id="back" aria-label="Voltar">←</button>
-     <div class="bar-title">${c.flag} ${esc(c.name)}</div><div class="bar-total">${cityFare(c)?`${money(cityFare(c))} no ${c.card}`:""}</div></div>
+     <div class="bar-title">${c.flag} ${esc(c.name)}</div><div class="bar-total">${cityFare(c)?`${money(cityFare(c))} no ${c.card}`:""}</div>${tools()}</div>
     <nav class="days" aria-label="Dias">${c.days.map((d,i)=>{const x=dt(d.d);return `<button class="dchip${d.d===today?" today":""}" aria-current="${i===view.day}" data-day="${i}"><b>${String(x.getDate()).padStart(2,"0")}</b><span>${DOWS[x.getDay()]}</span></button>`}).join("")}</nav></div>
    <div class="day" id="day">
     <div class="dayhead"><h2>${DOW[D.getDay()]}, ${D.getDate()} de novembro</h2><div class="sub">${esc(day.label||"")}</div>
@@ -371,7 +575,9 @@ function city(){
   document.querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>{view.day=+b.dataset.day;view.open=null;view.vid=null;city()});
   document.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{const i=+b.dataset.o;view.open=view.open===i?null:i;view.vid=null;city()});
   document.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{const k=key(+b.dataset.d);if(done[k])delete done[k];else done[k]=1;store.set("feito",done);view.open=null;city()});
-  document.querySelectorAll("[data-ph]").forEach(b=>b.onclick=()=>{const i=+b.dataset.ph,it=day.items[i];editPhoto(key(i),it.home?c.home.n:it.n,city)});
+  document.querySelectorAll("[data-ph]").forEach(b=>b.onclick=()=>{const it=day.items[+b.dataset.ph];editPhoto(ek(it),it.home?c.home.n:it.n,city)});
+  document.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{const it=day.items[+b.dataset.g];guide(c,it,ek(it),it.home?c.home.n:it.n)});
+  bindTools();
   document.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{view.vid=b.dataset.v||null;city()});
   document.querySelectorAll("[data-ja]").forEach(b=>b.onclick=()=>showJa(day.items[+b.dataset.ja]));
   $("#mapd").ontoggle=e=>store.set("mapa",e.target.open);
@@ -382,36 +588,28 @@ function city(){
   function row(cls,inner,mark){return `<li class="row"><div class="rail"><div class="dot ${cls}">${mark}</div></div><div>${inner}</div></li>`}
   function note(s){return `<li class="row note"><div class="rail"></div><div class="body">${esc(s)}</div></li>`}
   function legRow(l){return `<li class="row leg"><div class="rail">${legRail(l)}</div><div class="body">${legBody(l)}</div></li>`}
-  function vids(it,i){
-    const n=it.vids.length;
-    return `<div class="vids" data-vc="${i}">${it.vids.map(([p,id,title],j)=>{const k=`${i}-${j}`,url=p==="tt"?`https://www.tiktok.com/@/video/${id}`:`https://www.instagram.com/reel/${id}/`;
-      const inner=view.vid===k?`<div class="player ${p}"><iframe src="${p==="tt"?`https://www.tiktok.com/player/v1/${id}?description=0&music_info=0&rel=0`:`https://www.instagram.com/reel/${id}/embed`}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen loading="lazy" title="${esc(title)}"></iframe></div>`
-        :`<button class="vtile ${p}" data-v="${k}"><span class="plat">${p==="tt"?"TikTok":"Reels"}</span><span class="play" aria-hidden="true"></span><span class="vt">${esc(title)}</span></button>`;
-      return `<div class="vslide">${inner}<div class="pact"><a href="${url}" target="_blank" rel="noopener">Abrir no app ↗</a>${n>1?`<span class="muted">${j+1} de ${n}</span>`:""}</div></div>`}).join("")}</div>`;
-  }
-
-  function thumb(i,it){const src=photoOf(key(i),it);
+  function thumb(i,it){const src=photoOf(ek(it),it);
     if(src)return `<img class="th" src="${esc(src)}" alt="" loading="lazy">`;
     if(waiting(it))return `<img class="th" data-wk="${i}" alt="">`;
     return `<div class="th tile ja" aria-hidden="true">${tileTxt(it)}</div>`}
-  function big(i,it,credit){const src=photoOf(key(i),it),w=!photos[key(i)]&&!it.img?wikiOf(it):null;
+  function big(i,it,credit){const k=ek(it),src=photoOf(k,it),w=!photos[k]&&!ED.fotos[k]&&!it.img?wikiOf(it):null;
     if(src)return `<img class="ph" src="${esc(src)}" alt="">${credit&&w?`<a class="credit" href="${w.url}" target="_blank" rel="noopener">Foto: Wikipedia</a>`:""}`;
     if(waiting(it))return `<img class="ph" data-wkb="${i}" alt="">`;
     return ""}
-  function detail(it,i,isDone){
+  function detail(it,i,isDone){let gn=0;
     return `<div class="detail">${big(i,it,true)}${it.ja?`<p class="ja muted">${esc(it.ja)}</p>`:""}${it.note?`<p>${esc(it.note)}</p>`:""}${it.fee?`<p>Ingresso: ${esc(it.fee)}</p>`:""}
-     ${it.vids?vids(it,i):""}
      ${(it.links||[]).map(([l,u])=>`<p><a href="${u}" target="_blank" rel="noopener">${esc(l)} ↗</a></p>`).join("")}
      <div class="acts"><a class="btn sm" href="${goURL(it)}" target="_blank" rel="noopener">Ir</a>
       <a class="btn sm" href="${seeURL(it)}" target="_blank" rel="noopener">Fotos</a>
       <button class="btn sm" data-ja="${i}">${c.lang}</button>
-      <button class="btn sm" data-ph="${i}">Foto</button>
+      <button class="btn sm" data-g="${i}">Guia${(gn=gCount(guideData(c,it,ek(it))))?` <span class="cnt">${gn}</span>`:""}</button>
+      ${view.edit?`<button class="btn sm edit" data-ph="${i}">Foto</button>`:""}
       <button class="btn sm" data-d="${i}">${isDone?"Desfazer":"Feito"}</button></div></div>`;
   }
 }
 
 function showJa(it){
-  const o=$("#jaov");
+  const o=$("#jaov");o.className="jaov";
   if(it.home&&!addr()){
     o.innerHTML=`<div><div class="small" style="margin:0 0 14px">O endereço da hospedagem fica salvo só neste aparelho.</div>
      <input id="addr" class="field" placeholder="Cole o endereço da hospedagem" autocomplete="off">
@@ -453,16 +651,25 @@ function mapSVG(day){
 
 /* gestos: arrastar para o lado troca o dia */
 let sx=0,sy=0;
-document.addEventListener("touchstart",e=>{if(!view.city||e.target.closest(".days,.mapbox,.vids"))return sx=null;sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+document.addEventListener("touchstart",e=>{if(!view.city||!$("#jaov").hidden||e.target.closest(".days,.mapbox,.vids"))return sx=null;sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
 document.addEventListener("touchend",e=>{if(!view.city||sx==null)return;const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
   if(Math.abs(dx)>70&&Math.abs(dy)<45){const nd=view.day+(dx<0?1:-1);if(nd>=0&&nd<view.city.days.length){view.day=nd;view.open=null;city();scrollTo(0,0)}}},{passive:true});
-document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#jaov").hidden=true});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("#jaov").hidden=true;$("#jaov").className="jaov"}});
 
-/* abre direto em hoje durante a viagem */
-DB.load().then(function(){
+/* carrega dados sempre frescos, sem cache, e checa atualizações ao voltar para o app */
+applyTheme();
+function loadData(){return fetch("dados.js?v="+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{DATA_TEXT=t;const sc=document.createElement("script");sc.textContent=t;document.head.appendChild(sc)})
+  .catch(()=>new Promise(res=>{const sc=document.createElement("script");sc.src="dados.js";sc.onload=res;sc.onerror=res;document.head.appendChild(sc)}))}
+let lastCheck=Date.now();
+document.addEventListener("visibilitychange",async()=>{if(document.hidden||Date.now()-lastCheck<20000)return;lastCheck=Date.now();
+  const before=ED_TEXT;await loadEd();if(ED_TEXT!==before&&$("#jaov").hidden)rerender();
+  try{const t=await (await fetch("dados.js?v="+Date.now(),{cache:"no-store"})).text();if(DATA_TEXT&&t&&t!==DATA_TEXT)toast("Há uma versão nova do roteiro.",["Atualizar",reloadApp])}catch(e){}});
+Promise.all([loadData(),DB.load(),loadEd()]).then(function(){
   const today=jstToday(),h=location.hash.slice(1);
   const c=TRIP.cities.find(c=>c.days&&c.days.some(d=>d.d===today));
   if(c)openCity(c.id);else if(h&&TRIP.cities.some(x=>x.id===h&&x.days))openCity(h);else home();
+  if(location.search)try{history.replaceState(null,"",location.pathname+location.hash)}catch(e){}
+  flushLocal();
 });
 </script>
 
