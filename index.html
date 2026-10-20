@@ -568,6 +568,17 @@ function googleImages(q){
   return gReady.then(()=>new Promise(res=>{const t=setTimeout(()=>{gPending=null;res(null)},8000);
     gPending=r=>{clearTimeout(t);res(r.map(x=>{const full=(x.image&&x.image.url)||x.url,thumb=(x.thumbnailImage&&x.thumbnailImage.url)||full;return full?{full,thumb}:null}).filter(Boolean))};
     google.search.cse.element.getElement("fotos").execute(q)}))}
+async function resolveImgUrl(u){
+  try{const x=new URL(u),h=x.hostname.replace(/^www\./,"");
+    const q=x.searchParams.get("imgurl")||x.searchParams.get("mediaurl")||x.searchParams.get("image_url");if(q&&/^https?:/i.test(q))return q;
+    let m=h.match(/^([a-z-]+)\.wikipedia\.org$/);
+    if(m&&/^\/wiki\//.test(x.pathname)&&!/^\/wiki\/(Ficheiro|Arquivo|File):/i.test(x.pathname)){
+      const j=await (await fetch(`https://${m[1]}.wikipedia.org/api/rest_v1/page/summary/${x.pathname.slice(6)}`)).json();const im=(j.originalimage||j.thumbnail||{}).source;if(im)return im}
+    if(/(^|\.)(commons\.)?wikimedia\.org$|wikipedia\.org$/.test(h)&&/\/wiki\/(File|Ficheiro|Arquivo):/i.test(x.pathname)){
+      const t=decodeURIComponent(x.pathname.split("/wiki/")[1]);const j=await (await fetch("https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&prop=imageinfo&iiprop=url&iiurlwidth=1600&titles="+encodeURIComponent(t.replace(/^(Ficheiro|Arquivo):/i,"File:")))).json();
+      const p=Object.values((j.query||{}).pages||{})[0],ii=p&&(p.imageinfo||[])[0];if(ii)return ii.thumburl||ii.url}
+  }catch(e){}
+  return u}
 function editPhoto(k,name,after,query){
   query=query||name;
   let cur=photos[k]||imgSrc(k.startsWith("capa-")?ED.capas[k.slice(5)]:ED.fotos[k]);
@@ -578,7 +589,7 @@ function editPhoto(k,name,after,query){
     <a class="btn sm" id="pgoogle" href="#" target="_blank" rel="noopener">abrir no google imagens ↗</a>
     <div class="hint left" style="margin-top:8px">para as mesmas fotos do google, abra o link acima, toque e segure a foto, copie e volte aqui para colar.</div>
     <div class="acts" style="margin-top:6px"><button class="btn go" id="ppaste" style="flex:1">Colar</button><label class="btn" for="pfile">Galeria</label><input id="pfile" type="file" accept="image/*" hidden></div>
-    <div class="linkrow" style="margin-top:8px"><input id="purl" class="field" type="text" inputmode="url" placeholder="Ou cole o link da imagem" autocomplete="off" autocapitalize="off"><button class="btn" id="pok">Usar</button></div>
+    <div class="linkrow" style="margin-top:8px"><input id="purl" class="field" type="text" inputmode="url" placeholder="Ou cole o link da imagem, da página do google imagens ou da wikipédia" autocomplete="off" autocapitalize="off"><button class="btn" id="pok">Usar</button></div>
     <div class="pmsg" id="pmsg" aria-live="polite"></div>
     <div class="acts">${cur?`<button class="btn" id="pdel">Remover</button>`:""}<button class="btn" id="pclose" style="margin-left:auto">Fechar</button></div>
     <div class="hint">${canShare()?"Fica visível para todo o grupo.":"Fica salva só neste aparelho. Entre na sua conta, na engrenagem, para o grupo ver."}</div>`,()=>{document.removeEventListener("paste",onPaste);after()});
@@ -588,7 +599,7 @@ function editPhoto(k,name,after,query){
     dropLocal();DB.put(k,{blob:sb});photos[k]=URL.createObjectURL(sb);
     if(canShare()){msg("Enviando para o grupo…");try{const ref=await uploadFb(sb);await saveOps([opFor(k,ref)]);dropLocal()}catch(e){toast("Não consegui enviar a foto. Ficou salva neste aparelho.")}}
     close()};
-  const setLink=(u,alt)=>{u=u.trim();if(!/^https?:\/\//.test(u))return msg("Cole um link que comece com http.");msg("Abrindo a foto…");
+  const setLink=async(u,alt)=>{u=u.trim();if(!/^https?:\/\//.test(u))return msg("Cole um link que comece com http.");msg("Abrindo a foto…");const ru=await resolveImgUrl(u);if(ru!==u){u=ru;alt=null}
     const im=new Image();im.onload=async()=>{dropLocal();await saveOps([opFor(k,u)]);close()};
     if(alt&&alt!==u){im.onerror=()=>setLink(alt);im.src=u;return}
     im.onerror=()=>msg("Não consegui abrir essa imagem. Use o link direto da foto, de preferência terminando em .jpg, .png ou .webp.");im.src=u};
