@@ -745,7 +745,7 @@ async function gRoute(org,dest,iso){
   const r=await Promise.race([fetch("https://routes.googleapis.com/directions/v2:computeRoutes",{method:"POST",headers:{"Content-Type":"application/json","X-Goog-Api-Key":GKEY,
     "X-Goog-FieldMask":"routes.duration,routes.distanceMeters,routes.travelAdvisory.transitFare,routes.legs.steps.travelMode,routes.legs.steps.transitDetails"},
     body:JSON.stringify({origin:waypoint(org),destination:waypoint(dest),travelMode:"TRANSIT",departureTime:iso,languageCode:"pt-BR",units:"METRIC"})}),new Promise((_,j)=>setTimeout(()=>j(new Error("sem resposta do google")),12000))]);
-  const j=await r.json();if(!r.ok){const m=(j.error&&j.error.message)||"erro";throw new Error(r.status===403?"o google recusou a chave. confira se a Routes API está ativada e liberada na chave. ("+m+")":m)}
+  const j=await r.json();if(!r.ok){const m=(j.error&&j.error.message)||"erro",det=((j.error&&j.error.details)||[]).map(d=>[d.reason,d.metadata&&d.metadata.service,d.metadata&&d.metadata.consumer].filter(Boolean).join(" ")).filter(Boolean).join("; ");throw new Error("google "+r.status+(det?" ["+det+"]":"")+": "+m)}
   const rt=(j.routes||[])[0];if(!rt)throw new Error("o google não achou trajeto de transporte nesse horário.");
   const steps=[];((rt.legs||[])[0]||{steps:[]}).steps.forEach(st=>{const td=st.transitDetails;if(!td)return;const ln=td.transitLine||{},vt=(ln.vehicle||{}).type||"";
     const name=ln.nameShort||ln.name||"linha";steps.push({from:(td.stopDetails.departureStop||{}).name||"",to:(td.stopDetails.arrivalStop||{}).name||"",dep:td.stopDetails.departureTime,arr:td.stopDetails.arrivalTime,
