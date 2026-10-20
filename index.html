@@ -153,6 +153,25 @@ details.map[open] summary::after{content:"−"}
 .player.ig iframe{height:620px;background:var(--surface)}
 .pact{display:flex;justify-content:space-between;font-size:14px;padding:8px 2px 0}
 .pact button{color:var(--muted)}
+.ph{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:10px;margin-bottom:12px;background:var(--soft)}
+.focus .ph{margin:-6px 0 14px}
+.city{cursor:pointer}
+.city.has{background:#000}
+.cimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.city.has::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.45),rgba(0,0,0,0) 45%,rgba(0,0,0,.55))}
+.city.has{color:#fff}
+.city.has .kanji{display:none}
+.city>.name,.city>.dates{position:relative;z-index:1}
+.city .stat{z-index:1}
+.cover-edit{position:absolute!important;right:12px;top:12px;z-index:2;height:32px;padding:0 12px;border-radius:16px;font-size:13px;font-weight:600;background:rgba(255,255,255,.18);color:inherit;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.sheet{width:100%;max-width:440px;text-align:left}
+.sheet h3{margin:4px 0 16px;font-size:22px}
+.wide{width:100%}
+.or{text-align:center;color:var(--muted);font-size:14px;margin:14px 0 8px}
+.linkrow{display:flex;gap:8px}
+.linkrow .field{flex:1;min-width:0;font-family:var(--sans)}
+.pmsg{min-height:22px;font-size:14px;color:var(--muted);margin-top:8px}
+.hint{font-size:13px;color:var(--muted);margin-top:14px;text-align:center}
 .alldone{text-align:center;padding:8px 0}
 @media (prefers-reduced-motion:no-preference){.day{animation:in .18s ease-out}@keyframes in{from{opacity:.4;transform:translateY(4px)}}}
 </style>
@@ -176,7 +195,7 @@ const addr=()=>{try{return localStorage.getItem("endereco")||""}catch(e){return 
 const w=(min,km)=>({m:"w",min,km}), t=(min,km,fare,segs)=>({m:"t",min,km,fare,segs}), tour=(min,km)=>({m:"tour",min,km});
 
 const TRIP={cities:[
- {id:"toquio",name:"Tóquio",flag:"🇯🇵",kanji:"東京",dates:"02/11 a 09/11",days:[
+ {id:"toquio",name:"Tóquio",flag:"🇯🇵",kanji:"東京",dates:"02/11 a 09/11",cover:"https://images.squarespace-cdn.com/content/v1/5e019397a7a9f4232e428e43/1713238785801-KJSU32EBLWSNEVJZRYHW/IMG_2551.JPG",days:[
   {d:"2026-11-02",label:"Chegada",items:[
    {n:"Aeroporto de Haneda",ja:"羽田空港 第3ターミナル",p:[35.5494,139.7798],time:"19h45",note:"Preencher o Visit Japan Web antes acelera a imigração."},
    {n:"Estação de Shibuya",ja:"渋谷駅",p:[35.6580,139.7016],leg:t(35,25,540,[["KK","Shinagawa"],["JY","Shibuya"]])},
@@ -303,6 +322,49 @@ const query=s=>s.home?(addr()||"Shibuya Station, Tokyo"):(s.q||`${s.n}, Tokyo`);
 const goURL=s=>`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query(s))}&travelmode=${travel(s.leg)}`;
 const seeURL=s=>`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query(s))}`;
 
+/* fotos: salvas neste aparelho (IndexedDB); as fixas vêm do roteiro */
+const photos={};
+const DB={db:null,
+  load(){return new Promise(res=>{try{const r=indexedDB.open("roteiro",1);r.onupgradeneeded=()=>r.result.createObjectStore("fotos");
+    r.onsuccess=()=>{this.db=r.result;const tx=this.db.transaction("fotos").objectStore("fotos").openCursor();
+      tx.onsuccess=e=>{const cur=e.target.result;if(cur){photos[cur.key]=cur.value.url||URL.createObjectURL(cur.value.blob);cur.continue()}else res()};tx.onerror=()=>res()};
+    r.onerror=()=>res()}catch(e){res()}})},
+  put(k,v){try{this.db.transaction("fotos","readwrite").objectStore("fotos").put(v,k)}catch(e){}},
+  del(k){try{this.db.transaction("fotos","readwrite").objectStore("fotos").delete(k)}catch(e){}}};
+const photoOf=(k,it)=>photos[k]||it.img||null;
+const coverOf=c=>photos["capa-"+c.id]||c.cover||null;
+function shrink(blob){return new Promise(res=>{const u=URL.createObjectURL(blob),im=new Image();
+  im.onload=()=>{const m=1400,r=Math.min(1,m/Math.max(im.width,im.height)),cv=document.createElement("canvas");cv.width=Math.round(im.width*r);cv.height=Math.round(im.height*r);
+    cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(u);cv.toBlob(b=>res(b||blob),"image/jpeg",.84)};
+  im.onerror=()=>{URL.revokeObjectURL(u);res(null)};im.src=u})}
+function editPhoto(k,name,rerender){
+  const o=$("#jaov");let cur=photos[k];
+  const close=()=>{o.hidden=true;document.removeEventListener("paste",onPaste);rerender()};
+  const setBlob=async b=>{msg("Preparando a imagem…");const sb=await shrink(b);if(!sb)return msg("Esse arquivo não é uma imagem que eu consiga abrir.");
+    DB.put(k,{blob:sb});if(photos[k]&&photos[k].startsWith("blob:"))URL.revokeObjectURL(photos[k]);photos[k]=URL.createObjectURL(sb);close()};
+  const setLink=u=>{u=u.trim();if(!/^https?:\/\//.test(u))return msg("Cole um link que comece com http.");msg("Abrindo o link…");
+    const im=new Image();im.onload=()=>{DB.put(k,{url:u});photos[k]=u;close()};im.onerror=()=>msg("Não consegui abrir essa imagem. Use o link direto da foto, de preferência terminando em .jpg, .png ou .webp.");im.src=u};
+  const onPaste=e=>{const items=[...(e.clipboardData||{}).items||[]];const img=items.find(x=>x.type.startsWith("image/"));
+    if(img){e.preventDefault();setBlob(img.getAsFile());return}
+    const txt=e.clipboardData.getData("text");if(txt&&e.target.id!=="purl"){e.preventDefault();setLink(txt)}};
+  o.innerHTML=`<div class="sheet" role="document"><div class="eyebrow">Foto</div><h3>${esc(name)}</h3>
+    ${cur||""?`<img class="ph" src="${esc(cur)}" alt="">`:""}
+    <label class="btn go wide" for="pfile">Escolher da galeria</label><input id="pfile" type="file" accept="image/*" hidden>
+    <div class="or">ou cole a imagem ou o link aqui</div>
+    <div class="linkrow"><input id="purl" class="field" type="url" inputmode="url" placeholder="https://…" autocomplete="off"><button class="btn" id="pok">Usar</button></div>
+    <div class="pmsg" id="pmsg" aria-live="polite"></div>
+    <div class="acts">${cur?`<button class="btn" id="pdel">Remover</button>`:""}<button class="btn" id="pclose" style="margin-left:auto">Fechar</button></div>
+    <div class="hint">A foto fica salva só neste aparelho.</div></div>`;
+  function msg(t){$("#pmsg").textContent=t}
+  o.hidden=false;o.onclick=e=>{if(e.target===o)close()};
+  document.addEventListener("paste",onPaste);
+  $("#pfile").onchange=e=>{const f=e.target.files[0];if(f)setBlob(f)};
+  $("#pok").onclick=()=>setLink($("#purl").value);
+  $("#purl").onkeydown=e=>{if(e.key==="Enter")setLink(e.target.value)};
+  $("#pclose").onclick=close;
+  if(cur)$("#pdel").onclick=()=>{DB.del(k);delete photos[k];close()};
+}
+
 /* estado */
 let view={city:null,day:0,open:null,filter:"all",vid:null};
 
@@ -313,14 +375,16 @@ function home(){
    <div class="top"><h1>Japão 2026</h1>
     <div class="flags">${fl.map(([v,l])=>`<button class="flag${v==="all"?" txt":""}" aria-pressed="${view.filter===v}" data-f="${v}">${l}</button>`).join("")}</div></div>
    <div class="cities">${cities.map(c=>c.days?`
-    <button class="city" data-c="${c.id}"><span class="kanji">${c.kanji}</span>
+    <div class="city${coverOf(c)?" has":""}" data-c="${c.id}" role="button" tabindex="0">${coverOf(c)?`<img class="cimg" src="${esc(coverOf(c))}" alt="">`:""}<span class="kanji">${c.kanji}</span>
      <div class="name">${c.flag} ${esc(c.name)}</div><div class="dates">${c.dates}</div>
-     <div class="stat">${c.days.length} dias, ${yen(cityFare(c))} em transporte</div></button>`:`
+     <div class="stat">${c.days.length} dias, ${yen(cityFare(c))} em transporte</div>
+     <button class="cover-edit" data-cover="${c.id}">Foto</button></div>`:`
     <div class="city soon"><span class="kanji ja">${c.kanji}</span>
      <div class="name" style="font-size:20px">${c.flag} ${esc(c.name)}</div><div class="dates muted">${c.dates}</div>
      <div class="stat">Roteiro em breve</div></div>`).join("")}</div>`;
   document.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{view.filter=b.dataset.f;home()});
-  document.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>openCity(b.dataset.c));
+  document.querySelectorAll("[data-c]").forEach(b=>{b.onclick=e=>{if(!e.target.closest(".cover-edit"))openCity(b.dataset.c)};b.onkeydown=e=>{if(e.key==="Enter")openCity(b.dataset.c)}});
+  document.querySelectorAll("[data-cover]").forEach(b=>b.onclick=()=>{const c=TRIP.cities.find(x=>x.id===b.dataset.cover);editPhoto("capa-"+c.id,c.name,home)});
 }
 
 function openCity(id,dayIdx){
@@ -356,7 +420,8 @@ function city(){
   if(day.end){tl+=legRow(day.end);tl+=row("home",`<div class="stop"><div class="n">Airbnb</div><div class="t">Fim do dia</div></div>`,"家")}
 
   const nx=day.items[nextIdx];
-  const focus=nx?`<section class="focus" aria-label="Próxima parada">
+  const nph=nx?photoOf(key(nextIdx),nx):null;
+  const focus=nx?`<section class="focus" aria-label="Próxima parada">${nph?`<img class="ph" src="${esc(nph)}" alt="">`:""}
      <div class="eyebrow">${day.d===today?"Agora":"Primeira parada pendente"}</div>
      <h3>${esc(nx.home?"Airbnb":nx.n)}</h3>${nx.ja?`<div class="jn ja">${esc(nx.ja)}</div>`:""}
      ${nx.leg?`<div class="how">${legBody(nx.leg)}</div>`:""}
@@ -384,6 +449,7 @@ function city(){
   document.querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>{view.day=+b.dataset.day;view.open=null;view.vid=null;city()});
   document.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{const i=+b.dataset.o;view.open=view.open===i?null:i;view.vid=null;city()});
   document.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{const k=key(+b.dataset.d);if(done[k])delete done[k];else done[k]=1;store.set("feito",done);view.open=null;city()});
+  document.querySelectorAll("[data-ph]").forEach(b=>b.onclick=()=>{const i=+b.dataset.ph,it=day.items[i];editPhoto(key(i),it.home?"Airbnb":it.n,city)});
   document.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{view.vid=b.dataset.v||null;city()});
   document.querySelectorAll("[data-ja]").forEach(b=>b.onclick=()=>showJa(day.items[+b.dataset.ja]));
   $("#mapd").ontoggle=e=>store.set("mapa",e.target.open);
@@ -399,12 +465,14 @@ function city(){
       return `<button class="vtile ${p}" data-v="${k}"><span class="plat">${p==="tt"?"TikTok":"Reels"}</span><span class="play" aria-hidden="true"></span><span class="vt">${esc(title)}</span></button>`}).join("")}</div>`;
   }
   function detail(it,i,isDone){
-    return `<div class="detail">${it.ja?`<p class="ja muted">${esc(it.ja)}</p>`:""}${it.note?`<p>${esc(it.note)}</p>`:""}${it.fee?`<p>Ingresso: ${esc(it.fee)}</p>`:""}
+    const ph=photoOf(key(i),it);
+    return `<div class="detail">${ph?`<img class="ph" src="${esc(ph)}" alt="">`:""}${it.ja?`<p class="ja muted">${esc(it.ja)}</p>`:""}${it.note?`<p>${esc(it.note)}</p>`:""}${it.fee?`<p>Ingresso: ${esc(it.fee)}</p>`:""}
      ${it.vids?vids(it,i):""}
      ${(it.links||[]).map(([l,u])=>`<p><a href="${u}" target="_blank" rel="noopener">${esc(l)} ↗</a></p>`).join("")}
      <div class="acts"><a class="btn sm" href="${goURL(it)}" target="_blank" rel="noopener">Ir</a>
       <a class="btn sm" href="${seeURL(it)}" target="_blank" rel="noopener">Fotos</a>
       <button class="btn sm" data-ja="${i}">日本語</button>
+      <button class="btn sm" data-ph="${i}">Foto</button>
       <button class="btn sm" data-d="${i}">${isDone?"Desfazer":"Feito"}</button></div></div>`;
   }
 }
@@ -458,11 +526,11 @@ document.addEventListener("touchend",e=>{if(!view.city||sx==null)return;const dx
 document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#jaov").hidden=true});
 
 /* abre direto em hoje durante a viagem */
-(function(){
+DB.load().then(function(){
   const today=jstToday(),h=location.hash.slice(1);
   const c=TRIP.cities.find(c=>c.days&&c.days.some(d=>d.d===today));
   if(c)openCity(c.id);else if(h&&TRIP.cities.some(x=>x.id===h&&x.days))openCity(h);else home();
-})();
+});
 </script>
 
 </body>
