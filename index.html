@@ -578,7 +578,7 @@ function editPhoto(k,name,after,query){
     const im=new Image();im.onload=async()=>{dropLocal();await saveOps([opFor(k,u)]);close()};
     if(alt&&alt!==u){im.onerror=()=>setLink(alt);im.src=u;return}
     im.onerror=()=>msg("Não consegui abrir essa imagem. Use o link direto da foto, de preferência terminando em .jpg, .png ou .webp.");im.src=u};
-  function onPaste(e){const items=[...((e.clipboardData||{}).items||[])];const img=items.find(x=>x.type.startsWith("image/"));
+  function onPaste(e){if($("#jaov").hidden||!$("#pmsg"))return;const items=[...((e.clipboardData||{}).items||[])];const img=items.find(x=>x.type.startsWith("image/"));
     if(img){e.preventDefault();setBlob(img.getAsFile());return}
     const txt=e.clipboardData.getData("text");if(txt&&e.target.id!=="purl"){e.preventDefault();setLink(txt)}}
   document.addEventListener("paste",onPaste);
@@ -1239,12 +1239,14 @@ function showJa(it){
 
 /* gestos: arrastar para o lado troca o dia */
 let sx=0,sy=0;
-document.addEventListener("touchstart",e=>{if(!view.city||!$("#jaov").hidden||e.target.closest(".days,.mapbox,.vids,#mapreal"))return sx=null;sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+document.addEventListener("touchstart",e=>{if(!view.city||!$("#jaov").hidden||!$("#ov2").hidden||e.target.closest(".days,.mapbox,.vids,#mapreal"))return sx=null;sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
 document.addEventListener("touchend",e=>{if(!view.city||sx==null)return;const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
   if(Math.abs(dx)>70&&Math.abs(dy)<45){const nd=view.day+(dx<0?1:-1);if(nd>=0&&nd<view.city.days.length){view.day=nd;view.open=null;city();scrollTo(0,0)}}},{passive:true});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("#jaov").hidden=true;$("#jaov").className="jaov"}});
 
 /* carrega dados sempre frescos, sem cache, e checa atualizações ao voltar para o app */
+window.addEventListener("error",e=>{try{toast("erro no app: "+(e.message||"desconhecido"))}catch(x){}});
+window.addEventListener("unhandledrejection",e=>{try{toast("erro no app: "+((e.reason&&e.reason.message)||e.reason||"desconhecido"))}catch(x){}});
 applyTheme();
 function loadData(){return fetch("dados.js?v="+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{DATA_TEXT=t;const sc=document.createElement("script");sc.textContent=t;document.head.appendChild(sc)})
   .catch(()=>new Promise(res=>{const sc=document.createElement("script");sc.src="dados.js";sc.onload=res;sc.onerror=res;document.head.appendChild(sc)}))}
@@ -1258,14 +1260,14 @@ async function autoUpdate(first){
     else if(old!==now){
       let tries=0;try{tries=+sessionStorage.getItem("recarga")||0}catch(e){}
       if(tries<2){store.set("ver",now);try{sessionStorage.setItem("recarga",tries+1)}catch(e){}
-        if(first||$("#jaov").hidden)reloadApp();else store.set("ver",old)}
+        if(first||($("#jaov").hidden&&$("#ov2").hidden))reloadApp();else store.set("ver",old)}
     }else{try{sessionStorage.removeItem("recarga")}catch(e){}}
   }catch(e){}
   updating=false}
-setInterval(()=>{if(!document.hidden&&$("#jaov").hidden)autoUpdate()},60000);
+setInterval(()=>{if(!document.hidden&&$("#jaov").hidden&&$("#ov2").hidden)autoUpdate()},60000);
 let lastCheck=Date.now();
 document.addEventListener("visibilitychange",async()=>{if(document.hidden||Date.now()-lastCheck<20000)return;lastCheck=Date.now();
-  const before=ED_TEXT;await loadEd();if(ED_TEXT!==before&&$("#jaov").hidden)rerender();flushLocal();
+  const before=ED_TEXT;await loadEd();if(ED_TEXT!==before&&$("#jaov").hidden&&$("#ov2").hidden)rerender();flushLocal();
   autoUpdate()});
 Promise.all([loadData(),DB.load(),loadEd()]).then(function(){
   const today=jstToday(),h=location.hash.slice(1);
