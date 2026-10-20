@@ -266,6 +266,10 @@ h1,h2,h3,.eyebrow,.lbl,.btn,.bar-title,.city .name,.city .dates,.city .stat,.dch
 .ggrid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;grid-auto-flow:dense;margin:0 -2px 90px}
 .gt{position:relative;aspect-ratio:1;overflow:hidden;background:var(--soft);display:flex;align-items:flex-end;text-align:left;padding:0;color:var(--fg);border-radius:4px}
 .gt.big{grid-column:span 2;grid-row:span 2}
+.gt.paper{background:#fff1a8;color:#3b3300;align-items:flex-start;box-shadow:inset 0 -14px 18px -16px rgba(0,0,0,.18)}
+.gt.paper .ptxt{padding:10px 10px 8px;font-size:12.5px;line-height:1.35;font-weight:500;display:-webkit-box;-webkit-line-clamp:7;-webkit-box-orient:vertical;overflow:hidden;text-align:left;white-space:pre-wrap}
+.gt.paper.big .ptxt{font-size:15px;-webkit-line-clamp:12;padding:14px}
+.gbadge.pb{color:#3b3300;opacity:.55;top:auto;bottom:6px;right:6px}
 .gt img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .gt.hasimg::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 45%,rgba(0,0,0,.6))}
 .gt.hasimg .gtxt{color:#fff;z-index:1}
@@ -524,6 +528,7 @@ const ico=(n,s=18)=>`<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 
 const TYPES={video:{l:"vídeo",i:"reel"},spot:{l:"spot",i:"pin"},pose:{l:"pose",i:"pose"},dica:{l:"dica",i:"dica"},nota:{l:"nota",i:"nota"},
   print:{l:"print",i:"img"},blog:{l:"blog",i:"blog"},site:{l:"site",i:"site"},ingresso:{l:"ingresso",i:"ticket"},reserva:{l:"reserva",i:"cal"}};
 const ORDER=Object.keys(TYPES);
+const TH={};
 const PLAT={tt:"tiktok",tl:"tiktok",ig:"reels",yt:"youtube"};
 const typeIcon=x=>x.type==="video"?(x.plat==="tt"||x.plat==="tl"?"tiktok":x.plat==="yt"?"youtube":"reel"):x.type==="spot"?(x.p?"pin":"cam"):TYPES[x.type].i;
 const enc=encodeURIComponent;
@@ -671,9 +676,16 @@ function guide(c,it,k,name){
     const types=ORDER.filter(t=>counts[t]);if(filter!=="todos"&&!counts[filter])filter="todos";
     let shown=(filter==="todos"?list:list.filter(x=>x.type===filter)).slice().sort((a,b)=>(b.at||0)-(a.at||0));
     if(group)shown.sort((a,b)=>ORDER.indexOf(a.type)-ORDER.indexOf(b.type));
-    const tile=(x,i)=>{const img=imgSrc(x.img),big=i===0&&shown.length>=5&&filter==="todos"&&!group;
-      return `<button class="gt${big?" big":""}${img?" hasimg":""}" data-gi="${esc(x.id)}">${img?`<img src="${esc(img)}" alt="" loading="lazy" onerror="this.remove()">`:""}
-        ${img?`<span class="gbadge">${ico(typeIcon(x),14)}</span>`:`<span class="gglyph">${ico(typeIcon(x),big?38:26)}</span>`}<span class="gtxt">${esc(shortTitle(x))}</span></button>`};
+    const THUMB={};
+    const cover=x=>{if(x.img)return imgSrc(x.img);if(x.type!=="video")return null;
+      if(x.plat==="yt")return "https://i.ytimg.com/vi/"+x.vid+"/hqdefault.jpg";
+      if(x.plat==="ig")return "https://www.instagram.com/reel/"+x.vid+"/media/?size=l";
+      return TH[x.vid]||null};
+    const tile=(x,i)=>{const img=cover(x),big=i===0&&shown.length>=5&&filter==="todos"&&!group,paper=!img&&["nota","dica"].includes(x.type);
+      const vid=x.type==="video";
+      if(paper)return `<button class="gt paper${big?" big":""}" data-gi="${esc(x.id)}"><span class="gbadge pb">${ico(typeIcon(x),14)}</span><span class="ptxt">${esc((x.text||x.title||"").replace(/\s+/g," ").slice(0,big?260:150))}</span></button>`;
+      return `<button class="gt${big?" big":""}${img?" hasimg":""}" data-gi="${esc(x.id)}" ${vid&&x.plat==="tt"&&!img?`data-tt="${esc(x.vid)}" data-turl="${esc(x.url||"")}"`:""}>${img?`<img src="${esc(img)}" alt="" loading="lazy" onerror="this.remove();this.parentNode&&this.parentNode.classList.remove('hasimg')">`:""}
+        ${img||vid?`<span class="gbadge">${ico(typeIcon(x),14)}</span>`:`<span class="gglyph">${ico(typeIcon(x),big?38:26)}</span>`}${vid&&!img?`<span class="gglyph">${ico(typeIcon(x),big?38:26)}</span>`:""}<span class="gtxt">${esc(shortTitle(x))}</span></button>`};
     return head("","guia do lugar",esc(name),it.ja?`<div class="jn ja muted">${esc(it.ja)}</div>`:"")+ficha()+
       (list.length?`<div class="gchips"><button class="gchip" aria-pressed="${filter==="todos"}" data-gf="todos">todos <i>${list.length}</i></button>
         ${types.map(t=>`<button class="gchip" aria-pressed="${filter===t}" data-gf="${t}">${ico(TYPES[t].i,14)} ${TYPES[t].l} <i>${counts[t]}</i></button>`).join("")}
@@ -760,6 +772,9 @@ function guide(c,it,k,name){
   function bind(){
     $("#gx").onclick=closeSheet;const gb=$("#gback");
     if(st.m==="grid"){
+      document.querySelectorAll("#gbox [data-tt]").forEach(async t=>{const id=t.dataset.tt;if(id in TH&&!TH[id])return;
+        try{let u=TH[id];if(!u){const j=await Promise.race([fetch("https://www.tiktok.com/oembed?url="+enc(t.dataset.turl&&/\/video\//.test(t.dataset.turl)?t.dataset.turl:"https://www.tiktok.com/@/video/"+id)).then(r=>r.json()),new Promise((_,r)=>setTimeout(r,5000))]);u=TH[id]=j.thumbnail_url||""}
+          if(!u||!t.isConnected)return;const im=new Image();im.alt="";im.onload=()=>{if(!t.isConnected)return;t.classList.add("hasimg");t.prepend(im);const g=t.querySelector(".gglyph");if(g)g.remove();t.insertAdjacentHTML("afterbegin","");};im.src=u}catch(e){TH[id]=""}});
       document.querySelectorAll("#gbox [data-gf]").forEach(x=>x.onclick=()=>{filter=x.dataset.gf;render()});
       const g=document.querySelector("#gbox [data-grp]");if(g)g.onclick=()=>{group=!group;render()};
       document.querySelectorAll("#gbox [data-gi]").forEach(x=>x.onclick=()=>{const m=list.find(y=>y.id===x.dataset.gi);if(!m)return;
