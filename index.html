@@ -291,6 +291,11 @@ h1,h2,h3,.eyebrow,.lbl,.btn,.bar-title,.city .name,.city .dates,.city .stat,.dch
 .frm{display:flex;flex-direction:column;gap:10px;margin-top:12px}.frm .field{max-width:none}
 .prevw{max-width:100%;max-height:200px;border-radius:12px}
 .seg.rseg{margin-top:14px}
+.lmap{height:58vh;min-height:320px;width:100%;z-index:0}
+.pin{width:28px;height:28px;border-radius:14px;background:var(--accent,#24396B);color:var(--accent-ink,#fff);border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);display:grid;place-items:center;font:700 13px system-ui,sans-serif}
+.pin.home{background:#111;color:#fff;border-radius:9px}
+.pinwrap{background:none;border:0}
+.leaflet-container{font-family:inherit}.leaflet-popup-content{margin:12px 14px}.pbtn{margin-top:8px;height:34px}
 </style>
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
 </head>
@@ -970,7 +975,7 @@ function city(){
       ${alt?`<div><b>${money(fare-legs(day).find(l=>l.segs&&l.segs[0]&&l.segs[0][0]==="B01").fare+alt.leg.fare)}</b><span class="muted">no plano B</span></div>`:""}</div></div>
     ${focus}
     <ol class="tl">${tl}</ol>
-    <details class="map" id="mapd"${store.get("mapa")?" open":""}><summary>Mapa do dia</summary><div id="mapreal"></div><div class="mapbox">${mapSVG(day)}</div></details>
+    <details class="map" id="mapd"${store.get("mapa")?" open":""}><summary>Mapa do dia</summary><div id="mapreal" class="mapbox"></div></details>
    </div>`;
 
   $("#back").onclick=()=>{view.city=null;try{history.replaceState(null,"","#"+CUR.id)}catch(e){};home();scrollTo(0,0)};
@@ -984,14 +989,32 @@ function city(){
   bindTools();
   document.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{view.vid=b.dataset.v||null;city()});
   document.querySelectorAll("[data-ja]").forEach(b=>b.onclick=()=>showJa(day.items[+b.dataset.ja]));
-  const dayMap=()=>{const box=$("#mapreal");if(!box||box.dataset.on)return;box.dataset.on="1";
-    const pl=[];if(day.start)pl.push(c.home.p.join(","));
-    day.items.forEach(x=>{if(x.n&&x.p)pl.push(x.p.join(","));else if(x.n)pl.push(placeQ(c,x));else if(x.home)pl.push(c.home.p.join(","))});
-    if(day.end)pl.push(c.home.p.join(","));
-    const pts=pl.filter((v,i)=>v!==pl[i-1]).slice(0,10);if(pts.length<2){box.innerHTML="";return}
-    const src="https://maps.google.com/maps?hl=pt-BR&output=embed&dirflg=w&saddr="+enc(pts[0])+"&daddr="+pts.slice(1).map(enc).join("+to:");
-    const link="https://www.google.com/maps/dir/?api=1&travelmode=walking&origin="+enc(pts[0])+"&destination="+enc(pts[pts.length-1])+(pts.length>2?"&waypoints="+pts.slice(1,-1).map(enc).join("%7C"):"");
-    box.innerHTML=`<iframe class="mapframe" style="height:56vh" src="${src}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="mapa do dia"></iframe><div class="acts" style="margin:8px 0 12px"><a class="btn sm" href="${link}" target="_blank" rel="noopener">abrir no google maps ↗</a></div>`};
+  const dayMap=async()=>{const box=$("#mapreal");if(!box)return;
+    if(box.dataset.on){if(box._m)setTimeout(()=>box._m.invalidateSize(),50);return}box.dataset.on="1";
+    const P=[];let n=0;
+    if(day.start)P.push({p:c.home.p,home:1,t:c.home.n});
+    day.items.forEach(x=>{if(x.home)P.push({p:c.home.p,home:1,t:c.home.n,leg:x.leg,it:x});else if(x.n){n++;if(x.p)P.push({p:x.p,num:n,t:x.n,leg:x.leg,it:x})}});
+    if(day.end)P.push({p:c.home.p,home:1,t:c.home.n,leg:day.end});
+    if(P.length<2){box.innerHTML="";return}
+    box.innerHTML='<div class="hint left" style="padding:16px">carregando mapa…</div>';
+    try{if(!window.L){if(!document.getElementById("lfcss")){const l=document.createElement("link");l.id="lfcss";l.rel="stylesheet";l.href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css";document.head.appendChild(l)}
+        await loadScript("https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js")}}
+    catch(e){box.innerHTML='<div class="hint left" style="padding:16px">não consegui carregar o mapa agora.</div>';box.dataset.on="";return}
+    box.innerHTML='<div id="lmap" class="lmap"></div>';
+    const m=box._m=L.map("lmap",{zoomControl:false,attributionControl:true,tap:true});
+    L.control.zoom({position:"bottomright"}).addTo(m);
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{maxZoom:19,subdomains:"abcd",attribution:"© OpenStreetMap © CARTO"}).addTo(m);
+    for(let i=1;i<P.length;i++){const l=P[i].leg||{m:"w"},tr=l.m==="t"&&l.segs&&l.segs.length;
+      L.polyline([P[i-1].p,P[i].p],{color:tr?LINES[l.segs[0][0]].c:"#6b7280",weight:tr?5:3,opacity:.9,dashArray:tr?null:"2 7",lineCap:"round"}).addTo(m)}
+    const seen={};
+    P.forEach(x=>{const key=x.p.join();if(x.home&&seen[key])return;seen[key]=1;
+      const html=x.home?`<div class="pin home">${ico("airbnb",16)}</div>`:`<div class="pin">${x.num}</div>`;
+      const mk=L.marker(x.p,{icon:L.divIcon({className:"pinwrap",html,iconSize:[30,30],iconAnchor:[15,15]})}).addTo(m);
+      mk.bindPopup(`<b>${esc(x.t)}</b><br><button class="btn sm pbtn" data-pr>rota até aqui</button>`);
+      mk.on("popupopen",ev=>{const b=ev.popup.getElement().querySelector("[data-pr]");if(b)b.onclick=()=>{m.closePopup();routeSheet(c,x.it||{home:1},prevStop(day,day.items.indexOf(x.it)))}})});
+    m.fitBounds(P.map(x=>x.p),{padding:[34,34]});setTimeout(()=>m.invalidateSize(),80);
+    const link="https://www.google.com/maps/dir/?api=1&travelmode=walking&origin="+enc(P[0].p.join(","))+"&destination="+enc(P[P.length-1].p.join(","))+(P.length>2?"&waypoints="+P.slice(1,-1).slice(0,8).map(x=>enc(x.p.join(","))).join("%7C"):"");
+    box.insertAdjacentHTML("beforeend",`<div class="acts" style="margin:8px 12px 12px"><a class="btn sm" href="${link}" target="_blank" rel="noopener">abrir no google maps ↗</a></div>`)};
   $("#mapd").ontoggle=e=>{store.set("mapa",e.target.open);if(e.target.open)dayMap()};if($("#mapd").open)dayMap();
   document.querySelectorAll("[data-wk],[data-wkb]").forEach(el=>{const i=+(el.dataset.wk??el.dataset.wkb),it=day.items[i];
     wiki(it).then(r=>{if(!el.isConnected)return;if(r)el.src=r.src;else if(el.dataset.wk!=null){const d=document.createElement("div");d.className="th tile ja";d.textContent=tileTxt(it);el.replaceWith(d)}else el.remove()})});
@@ -1035,34 +1058,9 @@ function showJa(it){
   o.onclick=()=>{o.hidden=true};
 }
 
-function mapSVG(day){
-  const pts=[];
-  const HP=C().home.p;if(day.start)pts.push({p:HP,home:1});
-  day.items.forEach(it=>{if(it.n)pts.push({p:it.p,leg:it.leg});else if(it.home)pts.push({p:HP,home:1,leg:it.leg})});
-  if(day.end)pts.push({p:HP,home:1,leg:day.end});
-  const W=340,H=260,pad=26;
-  const lat0=pts.reduce((s,x)=>s+x.p[0],0)/pts.length,k=Math.cos(lat0*Math.PI/180);
-  const xs=pts.map(x=>x.p[1]*k),ys=pts.map(x=>-x.p[0]);
-  const minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys);
-  const s=Math.min((W-2*pad)/((maxx-minx)||.001),(H-2*pad)/((maxy-miny)||.001));
-  const ox=(W-(maxx-minx)*s)/2,oy=(H-(maxy-miny)*s)/2;
-  const P=i=>[ox+(xs[i]-minx)*s,oy+(ys[i]-miny)*s];
-  let lines="",pins="",n=0;
-  for(let i=1;i<pts.length;i++){
-    const [x1,y1]=P(i-1),[x2,y2]=P(i),l=pts[i].leg||{m:"w"};
-    const col=l.m==="t"&&l.segs.length?LINES[l.segs[0][0]].c:"var(--done)";
-    lines+=`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${col}" stroke-width="${l.m==="t"?4:2}" stroke-linecap="round"${l.m==="t"?"":' stroke-dasharray="2 5"'}/>`;
-  }
-  let homeDrawn=false;
-  pts.forEach((x,i)=>{const [cx,cy]=P(i);
-    if(x.home){if(homeDrawn)return;homeDrawn=true;pins+=`<rect x="${cx-11}" y="${cy-11}" width="22" height="22" rx="6" fill="var(--fg)"/><text x="${cx}" y="${cy+4.5}" text-anchor="middle" font-size="12" font-weight="700" fill="var(--bg)" font-family="var(--ja)">家</text>`}
-    else{n++;pins+=`<circle cx="${cx}" cy="${cy}" r="10" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/><text x="${cx}" y="${cy+4}" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--accent-ink)" font-family="var(--sans)">${n}</text>`}});
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Mapa esquemático do dia"><rect width="${W}" height="${H}" fill="var(--surface)"/>${lines}${pins}</svg>`;
-}
-
 /* gestos: arrastar para o lado troca o dia */
 let sx=0,sy=0;
-document.addEventListener("touchstart",e=>{if(!view.city||!$("#jaov").hidden||e.target.closest(".days,.mapbox,.vids"))return sx=null;sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+document.addEventListener("touchstart",e=>{if(!view.city||!$("#jaov").hidden||e.target.closest(".days,.mapbox,.vids,#mapreal"))return sx=null;sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
 document.addEventListener("touchend",e=>{if(!view.city||sx==null)return;const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
   if(Math.abs(dx)>70&&Math.abs(dy)<45){const nd=view.day+(dx<0?1:-1);if(nd>=0&&nd<view.city.days.length){view.day=nd;view.open=null;city();scrollTo(0,0)}}},{passive:true});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("#jaov").hidden=true;$("#jaov").className="jaov"}});
