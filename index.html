@@ -195,7 +195,7 @@ details.map[open] summary::after{content:"−"}
 .bar-total+.tools{margin-left:4px}
 .bar-total:empty+.tools{margin-left:auto}
 .btn.edit{border-style:dashed}
-.jaov.sheetmode{place-items:start center;overflow-y:auto;text-align:left;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}.jaov.sheetmode .sheet{padding-bottom:70px}
+.gsc-modal-background-image,.gsc-results-wrapper-overlay,.gsc-lightbox,.gcsc-find-more-on-google-root{display:none!important}#gcsebox{display:none!important;position:fixed;left:-9999px;pointer-events:none}.jaov.sheetmode{place-items:start center;overflow-y:auto;text-align:left;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}.jaov.sheetmode .sheet{padding-bottom:70px}
 .sheet .set{border-top:1px solid var(--hair);padding:14px 0}
 .sheet .lbl{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:10px}
 .hint.left{text-align:left;margin:0 0 10px;display:block}
@@ -547,8 +547,11 @@ async function initFirebase(){
 }
 const opFor=(k,url)=>k.startsWith("capa-")?{t:"capa",c:k.slice(5),url}:{t:"foto",k,url};
 
+function gFix(){try{document.querySelectorAll(".gsc-modal-background-image,.gsc-results-wrapper-overlay").forEach(e=>e.style.display="none");
+  [document.documentElement,document.body].forEach(e=>{e.style.overflow="";e.style.position="";e.style.height="";e.style.pointerEvents="";e.classList.remove("gsc-overflow-hidden","gsc-modal-open")});
+  const b=document.getElementById("gcsebox");if(b){b.hidden=true;b.style.pointerEvents="none"}}catch(e){}}
 function sheet(html,onClose){const o=$("#jaov");o.className="jaov sheetmode";o.innerHTML=`<div class="sheet" role="document">${html}</div>`;o.hidden=false;
-  const close=()=>{o.hidden=true;o.className="jaov";onClose&&onClose()};o.onclick=e=>{if(e.target===o)close()};o.scrollTop=0;return close}
+  const close=()=>{o.hidden=true;o.className="jaov";gFix();onClose&&onClose()};o.onclick=e=>{if(e.target===o)close()};o.scrollTop=0;return close}
 let toastT;function toast(t,act){const el=$("#toast");el.innerHTML=`<span>${esc(t)}</span>${act?`<button id="tact">${esc(act[0])}</button>`:""}`;el.hidden=false;
   if(act)$("#tact").onclick=()=>{el.hidden=true;act[1]()};clearTimeout(toastT);toastT=setTimeout(()=>el.hidden=true,act?9000:4500)}
 const rerender=()=>view.city?city():CUR?home():trips();
@@ -563,9 +566,9 @@ function googleImages(q){
     window.__gcse={parsetags:"explicit",initializationCallback:()=>{
       let box=document.getElementById("gcsebox");if(!box){box=document.createElement("div");box.id="gcsebox";box.hidden=true;document.body.appendChild(box)}
       google.search.cse.element.render({div:"gcsebox",tag:"searchresults-only",gname:"fotos",attributes:{enableImageSearch:true,defaultToImageSearch:true,disableWebSearch:true,imageSearchResultSetSize:"20",safeSearch:"off",enableHistory:false}});res()},
-      searchCallbacks:{image:{ready:(name,qq,promos,results)=>{if(gPending){gPending(results||[]);gPending=null}return true}}}};
+      searchCallbacks:{image:{ready:(name,qq,promos,results)=>{gFix();setTimeout(gFix,300);if(gPending){gPending(results||[]);gPending=null}return true}}}};
     loadScript("https://cse.google.com/cse.js?cx="+GCX).catch(rej)});
-  return gReady.then(()=>new Promise(res=>{const t=setTimeout(()=>{gPending=null;res(null)},8000);
+  return Promise.race([gReady,new Promise((_,j)=>setTimeout(()=>{gReady=null;j(0)},6000))]).then(()=>new Promise(res=>{const t=setTimeout(()=>{gPending=null;res(null)},8000);
     gPending=r=>{clearTimeout(t);res(r.map(x=>{const full=(x.image&&x.image.url)||x.url,thumb=(x.thumbnailImage&&x.thumbnailImage.url)||full;return full?{full,thumb}:null}).filter(Boolean))};
     google.search.cse.element.getElement("fotos").execute(q)}))}
 async function resolveImgUrl(u){
