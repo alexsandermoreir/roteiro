@@ -627,10 +627,11 @@ function hospSheet(c){
       b.innerHTML=head+`<p class="gvtext" style="margin:14px 0">os dados da hospedagem (endereço, anfitrião, senhas) só aparecem para quem está na conta do grupo.</p>
         <div class="acts"><button class="btn go" id="hlogin">entrar na conta</button></div>`;
       $("#hx").onclick=close;$("#hlogin").onclick=()=>{close();settings()};return}
-    const d=hosp(c),fields=HF(c),has=fields.some(([k])=>d[k]);
+    const d={...hosp(c)},fields=HF(c),has=fields.some(([k])=>d[k]);if(!d.endereco){const la=addr();if(la)d.endereco=la}
     if(editing||!has){
       b.innerHTML=head+`<div class="frm">${fields.map(([k,l,t])=>t==="area"?`<label class="lbl2">${esc(l)}<textarea class="field area" rows="2" data-f="${k}">${esc(d[k]||"")}</textarea></label>`
         :`<label class="lbl2">${esc(l)}<input class="field" data-f="${k}" type="text" value="${esc(d[k]||"")}" autocomplete="off" ${t==="secret"?'autocapitalize="off"':""}></label>`).join("")}</div>
+        ${has?"":`<div class="hint left">ainda não há dados salvos. o ponto aproximado no mapa é "${esc(c.home.q||c.home.n)}". preencha o endereço real do airbnb.</div>`}
         <div class="acts"><button class="btn" id="hcancel">${has?"cancelar":"fechar"}</button><button class="btn go" id="hsave" style="margin-left:auto">salvar</button></div>
         <div class="hint">guardado só no firebase, visível para quem está na lista do grupo.</div>`;
       $("#hx").onclick=close;$("#hcancel").onclick=()=>{if(has){editing=false;draw()}else close()};
@@ -969,7 +970,7 @@ function city(){
       ${alt?`<div><b>${money(fare-legs(day).find(l=>l.segs&&l.segs[0]&&l.segs[0][0]==="B01").fare+alt.leg.fare)}</b><span class="muted">no plano B</span></div>`:""}</div></div>
     ${focus}
     <ol class="tl">${tl}</ol>
-    <details class="map" id="mapd"${store.get("mapa")?" open":""}><summary>Mapa do dia</summary><div class="mapbox">${mapSVG(day)}</div></details>
+    <details class="map" id="mapd"${store.get("mapa")?" open":""}><summary>Mapa do dia</summary><div id="mapreal"></div><div class="mapbox">${mapSVG(day)}</div></details>
    </div>`;
 
   $("#back").onclick=()=>{view.city=null;try{history.replaceState(null,"","#"+CUR.id)}catch(e){};home();scrollTo(0,0)};
@@ -983,7 +984,15 @@ function city(){
   bindTools();
   document.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{view.vid=b.dataset.v||null;city()});
   document.querySelectorAll("[data-ja]").forEach(b=>b.onclick=()=>showJa(day.items[+b.dataset.ja]));
-  $("#mapd").ontoggle=e=>store.set("mapa",e.target.open);
+  const dayMap=()=>{const box=$("#mapreal");if(!box||box.dataset.on)return;box.dataset.on="1";
+    const pl=[];if(day.start)pl.push(c.home.p.join(","));
+    day.items.forEach(x=>{if(x.n&&x.p)pl.push(x.p.join(","));else if(x.n)pl.push(placeQ(c,x));else if(x.home)pl.push(c.home.p.join(","))});
+    if(day.end)pl.push(c.home.p.join(","));
+    const pts=pl.filter((v,i)=>v!==pl[i-1]).slice(0,10);if(pts.length<2){box.innerHTML="";return}
+    const src="https://maps.google.com/maps?hl=pt-BR&output=embed&dirflg=w&saddr="+enc(pts[0])+"&daddr="+pts.slice(1).map(enc).join("+to:");
+    const link="https://www.google.com/maps/dir/?api=1&travelmode=walking&origin="+enc(pts[0])+"&destination="+enc(pts[pts.length-1])+(pts.length>2?"&waypoints="+pts.slice(1,-1).map(enc).join("%7C"):"");
+    box.innerHTML=`<iframe class="mapframe" style="height:56vh" src="${src}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="mapa do dia"></iframe><div class="acts" style="margin:8px 0 12px"><a class="btn sm" href="${link}" target="_blank" rel="noopener">abrir no google maps ↗</a></div>`};
+  $("#mapd").ontoggle=e=>{store.set("mapa",e.target.open);if(e.target.open)dayMap()};if($("#mapd").open)dayMap();
   document.querySelectorAll("[data-wk],[data-wkb]").forEach(el=>{const i=+(el.dataset.wk??el.dataset.wkb),it=day.items[i];
     wiki(it).then(r=>{if(!el.isConnected)return;if(r)el.src=r.src;else if(el.dataset.wk!=null){const d=document.createElement("div");d.className="th tile ja";d.textContent=tileTxt(it);el.replaceWith(d)}else el.remove()})});
   const cur=document.querySelector('.dchip[aria-current="true"]');if(cur)cur.scrollIntoView({inline:"center",block:"nearest"});
