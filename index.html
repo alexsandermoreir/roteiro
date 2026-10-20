@@ -90,10 +90,11 @@ a{color:inherit}
 .btn.sm{height:38px;padding:0 14px;font-size:14px}
 
 /* Trajeto */
-.legline{display:flex;flex-wrap:wrap;align-items:center;gap:6px 6px;font-size:14px}
-.chip{display:inline-flex;align-items:center;gap:6px;font-weight:600}
-.code{display:inline-grid;place-items:center;min-width:28px;height:24px;padding:0 4px;border:3px solid var(--c);border-radius:7px;font:700 12px/1 var(--sans);background:var(--surface)}
-.code.bus{font-family:var(--ja);font-size:10px}
+.legline{display:flex;flex-wrap:wrap;align-items:center;gap:8px 6px;font-size:14px}
+.to{margin-right:4px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px 0 3px;border-radius:14px;background:var(--c);color:var(--ct);font-weight:700;font-size:13px;letter-spacing:.01em;white-space:nowrap}
+.chip.bus{padding-left:12px}
+.code{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 4px;border-radius:11px;background:#fff;color:#14161A;font:800 11px/1 var(--sans);letter-spacing:0}
 .to{color:var(--muted)}
 .legmeta{font-size:14px;color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums;margin-top:4px}
 .legmeta .muted{font-weight:400}
@@ -190,112 +191,13 @@ details.map[open] summary::after{content:"−"}
 <div class="wrap" id="app"></div>
 <div class="jaov" id="jaov" hidden role="dialog" aria-modal="true"></div>
 
+<script src="dados.js"></script>
 <script>
-const LINES={
-  KK:{n:"Keikyū",c:"#E5171F"}, JY:{n:"Yamanote",c:"#80C241"}, JE:{n:"Keiyō",c:"#C9252F"},
-  Z:{n:"Hanzōmon",c:"#8F76D6"}, C:{n:"Chiyoda",c:"#00BB85"}, OH:{n:"Odakyū",c:"#1C6EB9"},
-  M:{n:"Marunouchi",c:"#F62E36"}, E:{n:"Ōedo",c:"#B6007A"}, G:{n:"Ginza",c:"#FF9500"},
-  U:{n:"Yurikamome",c:"#1A9FD8"}, R:{n:"Rinkai",c:"#3364B0"},
-  B88:{n:"Ônibus 渋88",c:"#3A9E6B",bus:1}, B01:{n:"Ônibus 海01",c:"#3A9E6B",bus:1}, SK:{n:"Skytree Shuttle",c:"#3A9E6B",bus:1}
-};
-const HOME={n:"Airbnb",p:[35.6580,139.7016]};
-const addr=()=>{try{return localStorage.getItem("endereco")||""}catch(e){return ""}};
-const w=(min,km)=>({m:"w",min,km}), t=(min,km,fare,segs)=>({m:"t",min,km,fare,segs}), tour=(min,km)=>({m:"tour",min,km});
-
-const TRIP={cities:[
- {id:"toquio",name:"Tóquio",flag:"🇯🇵",kanji:"東京",dates:"02/11 a 09/11",cover:"https://images.squarespace-cdn.com/content/v1/5e019397a7a9f4232e428e43/1713238785801-KJSU32EBLWSNEVJZRYHW/IMG_2551.JPG",days:[
-  {d:"2026-11-02",label:"Chegada",items:[
-   {n:"Aeroporto de Haneda",ja:"羽田空港 第3ターミナル",p:[35.5494,139.7798],time:"19h45",note:"Preencher o Visit Japan Web antes acelera a imigração."},
-   {n:"Estação de Shibuya",ja:"渋谷駅",p:[35.6580,139.7016],leg:t(35,25,540,[["KK","Shinagawa"],["JY","Shibuya"]])},
-   {home:1,time:"22h",note:"Check-in sozinho por volta das 22h. Confirmar com o anfitrião.",leg:w(8,.67)},
-   {txt:"Sair para comer em Shibuya"}]},
-  {d:"2026-11-03",label:"Feriado",start:1,depart:"Saída às 7h45",items:[
-   {n:"Meiji Jingu",ja:"明治神宮",p:[35.6764,139.6993],leg:t(20,4,160,[["JY","Yoyogi"]]),note:"Hoje acontece o reisai, principal rito do ano, com mensageiro imperial e yabusame. Esperem muita gente.",info:"Portões 6h10, salão 8h15, jardim interno 9h, cerimônia 10h",fee:"Jardim interno ¥500"},
-   {n:"Takeshita Street",ja:"竹下通り",p:[35.6716,139.7031],leg:w(17,1.4),note:"Uns 20 a 25 minutos para o grupo. Caminhada fácil, com fluxo crescente."},
-   {n:"Harakado",ja:"東急プラザ原宿「ハラカド」",p:[35.6683,139.7056],leg:w(5,.42),info:"Lojas 11h às 21h, restaurantes e terraço até 23h"},
-   {n:"Omotesando Hills",ja:"表参道ヒルズ",p:[35.6672,139.7091],leg:w(5,.4),info:"11h às 20h"},
-   {txt:"Almoço. Sugestão: Menchirashi, abre 11h30 e tem fila."},
-   {n:"Miyashita Park",ja:"ミヤシタパーク",p:[35.6620,139.7027],leg:w(13,1.1),info:"11h às 21h"},
-   {n:"Apple Shibuya",ja:"Apple 渋谷",p:[35.6626,139.7006],leg:w(5,.43),note:"Abre às 10h. Pegar os iPhones."},
-   {n:"Shibuya Sky",ja:"渋谷スカイ",p:[35.6585,139.7022],leg:w(8,.65),time:"16h",note:"Das 16h às 16h40, pôr do sol. Reservar com antecedência.",fee:"¥3.400",links:[["Ingressos","https://www.shibuya-scramble-square.com/sky/"]],vids:[["ig","Deop10Att4i","Escada rolante panorâmica"]]},
-   {n:"Hachiko",ja:"ハチ公像",p:[35.6591,139.7006],leg:w(4,.3)},
-   {n:"Shibuya 109",ja:"SHIBUYA109",p:[35.6596,139.6987],leg:w(2,.2),info:"10h às 21h"},
-   {n:"MEGA Don Quijote",ja:"MEGAドン・キホーテ渋谷本店",p:[35.6608,139.6973],leg:w(2,.17)},
-   {n:"Center-Gai",ja:"渋谷センター街",p:[35.6604,139.6990],leg:w(1,.1)},
-   {n:"Nintendo Tokyo",ja:"Nintendo TOKYO 渋谷PARCO 6階",p:[35.6622,139.6988],leg:w(4,.31),note:"Senha numerada em feriados. À noite a espera é longa ou as senhas acabam.",info:"10h às 21h, 6º andar do Parco"},
-   {n:"Pokémon Center",ja:"ポケモンセンターシブヤ",p:[35.6623,139.6989],leg:w(1,.09),info:"10h às 21h, 6º andar do Parco"},
-   {n:"Shibuya Parco",ja:"渋谷PARCO",p:[35.6621,139.6987],leg:w(1,.1)},
-   {n:"Nonbei Yokocho",ja:"のんべい横丁",p:[35.6593,139.7027],leg:w(5,.42),info:"17h às 4h"},
-   {n:"Shibuya Crossing",ja:"渋谷スクランブル交差点",p:[35.6595,139.7005],leg:w(2,.17)}],
-   end:w(10,.8)},
-  {d:"2026-11-04",label:"Disneyland",start:1,items:[
-   {n:"Tokyo Disneyland",ja:"東京ディズニーランド",p:[35.6329,139.8804],leg:t(53,24,440,[["JY","Tokyo"],["JE","Maihama"]]),info:"9h às 21h",note:"Reservar com antecedência."}],
-   end:t(57,20,440,[["JE","Tokyo"],["JY","Shibuya"]])},
-  {d:"2026-11-05",label:"DisneySea",start:1,items:[
-   {n:"Tokyo DisneySea",ja:"東京ディズニーシー",p:[35.6267,139.8851],leg:t(59,25,440,[["JY","Tokyo"],["JE","Maihama"]]),info:"9h às 21h",note:"Reservar com antecedência."}],
-   end:t(65,25,440,[["JE","Tokyo"],["JY","Shibuya"]])},
-  {d:"2026-11-06",label:"Gatinhos e Shinjuku",start:1,items:[
-   {n:"Gōtoku-ji",ja:"豪徳寺",p:[35.6489,139.6474],leg:t(36,7.3,350,[["Z","Omote-sandō"],["C","Gōtokuji"]]),note:"O balcão dos gatinhos da sorte abre às 8h e fecha entre 15h e 16h30. Ir de manhã, é o único ponto distante do dia.",info:"Templo 6h às 17h, entrada gratuita"},
-   {n:"Escadaria Your Name",ja:"須賀神社 男坂",p:[35.6849,139.7218],leg:t(53,12,380,[["OH","Shinjuku"],["M","Yotsuya-sanchōme"]])},
-   {txt:"Almoço às 12h"},
-   {n:"Shinjuku Gyoen",ja:"新宿御苑",p:[35.6852,139.7101],leg:w(21,1.8),info:"9h às 16h30, última entrada 16h",fee:"¥500",note:"Exposição de crisântemos de 1 a 15/11. Estufa das 9h30 às 16h."},
-   {n:"Prefeitura de Tóquio",ja:"東京都庁",p:[35.6896,139.6917],leg:w(27,2.3),note:"Os dois mirantes abrem na sexta. Ir ao entardecer: depois do pôr do sol começa a projeção na fachada."},
-   {n:"BicCamera",ja:"ビックカメラ新宿西口店",p:[35.6917,139.6977],leg:w(11,.92)},
-   {n:"Don Quijote Kabukicho",ja:"ドン・キホーテ新宿歌舞伎町店",p:[35.6940,139.7020],leg:w(6,.48),info:"24 horas"},
-   {n:"Godzilla Head",ja:"ゴジラヘッド",p:[35.6953,139.7016],leg:w(2,.16)},
-   {n:"Tokyu Kabukicho Tower",ja:"東急歌舞伎町タワー",p:[35.6958,139.7004],leg:w(3,.22)},
-   {n:"Kabukicho",ja:"歌舞伎町",p:[35.6946,139.7030],leg:w(3,.29)},
-   {n:"Golden Gai",ja:"新宿ゴールデン街",p:[35.6941,139.7048],leg:w(6,.46),note:"Bares minúsculos, vários cobram entrada. Com 6 pessoas, talvez dividir o grupo."},
-   {n:"Cross Shinjuku Vision",ja:"クロス新宿ビジョン",p:[35.6917,139.7022],leg:w(6,.52),note:"O gato aparece a cada 15 minutos: :00, :15, :30 e :45."},
-   {n:"Omoide Yokocho",ja:"思い出横丁",p:[35.6930,139.6996],leg:w(2,.18),info:"24 horas"}],
-   end:t(20,4.6,200,[["JY","Shibuya"]])},
-  {d:"2026-11-07",label:"Tokyo Tower e Odaiba",start:1,items:[
-   {n:"7-Eleven",ja:"セブン-イレブン",p:[35.6560,139.7495],leg:t(33,5.3,290,[["Z","Aoyama-itchōme"],["E","Akabanebashi"]]),note:"Photo spot.",q:"7-Eleven Shiba Koen Tokyo Tower"},
-   {n:"Kaledo Tower",p:[35.6578,139.7480],leg:w(8,.62),note:"Photo spot."},
-   {n:"Tokyo Tower",ja:"東京タワー",p:[35.6586,139.7454],leg:w(4,.35),note:"Photo spot em 35.657156, 139.745717. Reservar com antecedência."},
-   {n:"Templo Zojoji",ja:"増上寺",p:[35.6575,139.7483],leg:w(6,.5),info:"9h às 17h"},
-   {n:"teamLab Borderless",ja:"チームラボボーダレス 麻布台ヒルズ",p:[35.6605,139.7405],leg:w(12,.97),info:"8h30 às 21h",note:"Reservar com antecedência."},
-   {n:"Azabudai Hills",ja:"麻布台ヒルズ",p:[35.6606,139.7395],leg:w(6,.47),note:"Opção para quem não for ao teamLab. Almoço às 12h30."},
-   {n:"Rainbow Bridge",ja:"レインボーブリッジ 芝浦口",p:[35.6415,139.7560],leg:t(41,6.5,470,[["B88","Shimbashi"],["U","Shibaura-futō"]]),time:"16h",note:"Atravessar às 16h para o pôr do sol, às 16h42. A travessia leva uns 30 minutos e a entrada fica a 5 minutos da estação.",info:"Passarela 10h às 18h, última entrada 17h30"},
-   {n:"Odaiba Marine Park",ja:"お台場海浜公園",p:[35.6297,139.7752],leg:w(30,2.5),note:"Tokyo Aqua Symphony: shows de 10 minutos às 15h, 15h45, 16h30, 17h15, 18h, 18h45, 19h30, 20h15, 21h e 21h30. Programação de novembro a confirmar.",links:[["Programação","https://tokyoaquasymphony.jp/en/schedule/"]]},
-   {n:"Estátua da Liberdade",ja:"自由の女神像",p:[35.6278,139.7717],leg:w(6,.49)},
-   {alt:"Plano B, sem o A-PIT: voltar direto para casa pela Tokyo Teleport",leg:t(0,0,540,[["R","Shibuya"]])},
-   {n:"A-PIT Autobacs",ja:"A PIT オートバックス東雲",p:[35.6440,139.8040],leg:t(25,4,210,[["B01","Fukagawa-Shako-Iriguchi"]])},
-   {n:"Daikoku Parking Area",ja:"大黒パーキングエリア",p:[35.4620,139.6830],leg:tour(96,28),note:"Passeio com agência."},
-   {n:"Shibuya Crossing",ja:"渋谷スクランブル交差点",p:[35.6595,139.7005],leg:tour(75,29),note:"Parada final da experiência Tokyo Drift."}],
-   end:w(10,.8)},
-  {d:"2026-11-08",label:"Asakusa, Skytree e Ueno",start:1,items:[
-   {n:"Sensō-ji",ja:"浅草寺",p:[35.7148,139.7967],leg:t(46,15,260,[["G","Asakusa"]]),vids:[["tt","7638486337309445383","@dicasdaemilynha"]]},
-   {n:"Nakamise",ja:"仲見世通り",p:[35.7120,139.7963],leg:w(4,.36),info:"9h às 20h"},
-   {n:"Rio Sumida",ja:"隅田川",p:[35.7105,139.7990],leg:w(6,.49)},
-   {n:"Tokyo Skytree",ja:"東京スカイツリー",p:[35.7101,139.8107],leg:w(19,1.5),info:"9h às 22h",note:"Reservar com antecedência."},
-   {n:"The Matcha Tokyo",ja:"THE MATCHA TOKYO 東京ソラマチ",p:[35.7100,139.8115],leg:w(3,.26),note:"Photo spot na entrada East Yard: escada rolante com a Skytree ao fundo."},
-   {n:"Ueno Park",ja:"上野恩賜公園",p:[35.7156,139.7745],leg:t(19,4.3,250,[["SK","Ueno"]]),info:"5h às 23h"},
-   {n:"Ameyoko",ja:"アメ横",p:[35.7100,139.7745],leg:w(7,.6)},
-   {n:"Akihabara",ja:"秋葉原電気街",p:[35.6984,139.7731],leg:w(15,1.3)}],
-   end:t(38,12,210,[["G","Shibuya"]])},
-  {d:"2026-11-09",label:"Ida para Kawaguchiko",start:1,depart:"Check-out. Enviar as malas para Kyoto.",items:[
-   {n:"Tsukiji Outer Market",ja:"築地場外市場",p:[35.6655,139.7707],leg:t(37,10,null,[])},
-   {n:"Hamarikyu",ja:"浜離宮恩賜庭園",p:[35.6600,139.7633],leg:w(17,1.4),info:"9h às 17h"},
-   {n:"Ginza Six",ja:"GINZA SIX",p:[35.6697,139.7640],leg:w(18,1.5),note:"Na rua Chuo-dori."},
-   {n:"Uniqlo Ginza",ja:"ユニクロ 銀座店",p:[35.6718,139.7648],leg:w(2,.14),info:"11h às 21h"},
-   {n:"A Happy Pancake",ja:"幸せのパンケーキ 銀座店",p:[35.6727,139.7640],leg:w(3,.24)},
-   {n:"Yurakucho",ja:"有楽町",p:[35.6751,139.7630],leg:w(8,.63)},
-   {n:"Palácio Imperial",ja:"皇居",p:[35.6852,139.7528],leg:w(29,2.4),note:"Reservar a visita guiada com antecedência."},
-   {n:"Marunouchi",ja:"丸の内",p:[35.6810,139.7660],leg:w(23,1.9)},
-   {n:"Estação de Tóquio",ja:"東京駅",p:[35.6812,139.7671],leg:w(3,.26)},
-   {home:1,note:"Pegar as mochilas.",leg:t(35,14,260,[["JY","Shibuya"]])},
-   {n:"Busta Shinjuku",ja:"バスタ新宿",p:[35.6884,139.7002],leg:t(13,4,200,[["JY","Shinjuku"]]),note:"Ônibus expresso para Kawaguchiko, seguir a placa Expressway Bus. Cerca de 2h, saídas das 6h55 às 22h25. Comprar a passagem antes.",fee:"¥2.200 (fora do Suica)",links:[["Passagem","https://highway-buses.jp/course/kawaguchiko.php"]]}]}
- ]},
- {id:"kawaguchiko",name:"Kawaguchiko",flag:"🇯🇵",kanji:"河口湖",dates:"10/11"},
- {id:"kyoto",name:"Kyoto",flag:"🇯🇵",kanji:"京都",dates:"11/11 a 13/11"},
- {id:"osaka",name:"Osaka",flag:"🇯🇵",kanji:"大阪",dates:"13/11 a 17/11"},
- {id:"seul",name:"Seul",flag:"🇰🇷",kanji:"서울",dates:"Datas a definir"}
-]};
-
 /* utilidades */
 const $=s=>document.querySelector(s);
-const yen=n=>"¥"+n.toLocaleString("pt-BR");
+const C=()=>view.city;
+const money=(n,c=view.city)=>((c&&c.cur)||"¥")+n.toLocaleString("pt-BR");
+const addr=()=>{try{const c=view.city;return (c&&(localStorage.getItem("endereco-"+c.id)||(c.id==="toquio"&&localStorage.getItem("endereco"))))||""}catch(e){return ""}};
 const dur=m=>m>=60?`${Math.floor(m/60)}h${String(m%60).padStart(2,"0")}`:`${m} min`;
 const dist=k=>k<1?`${Math.round(k*1000)} m`:`${k.toLocaleString("pt-BR",{maximumFractionDigits:1})} km`;
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -311,12 +213,13 @@ const dayFare=day=>legs(day).reduce((s,l)=>s+(l.fare||0),0);
 const dayKm=day=>legs(day).reduce((s,l)=>s+(l.km||0),0);
 const cityFare=c=>c.days.reduce((s,d)=>s+dayFare(d),0);
 
-function chip(k){const L=LINES[k];return `<span class="chip"><span class="code${L.bus?" bus":""}" style="--c:${L.c}">${L.bus?"バス":k}</span>${esc(L.n)}</span>`}
+const ink=hex=>{const n=parseInt(hex.slice(1),16),r=n>>16&255,g=n>>8&255,b=n&255;return (r*299+g*587+b*114)/1000>150?"#14161A":"#FFFFFF"};
+function chip(k){const L=LINES[k];return `<span class="chip${L.bus?" bus":""}" style="--c:${L.c};--ct:${ink(L.c)}">${L.bus?"":`<span class="code">${k}</span>`}${esc(L.n)}</span>`}
 function legBody(l){
   if(l.m==="w")return `<div class="walk">${dur(l.min)} a pé, ${dist(l.km)}</div>`;
-  if(l.m==="tour")return `<div class="walk">De carro com a agência, ${dur(l.min)}</div>`;
-  const segs=l.segs.length?l.segs.map(([k,to])=>`${chip(k)}<span class="to">até ${esc(to)}</span>`).join(""):`<span class="walk">Metrô, trajeto a definir</span>`;
-  const meta=[l.fare!=null?yen(l.fare):`<span class="muted">valor a definir</span>`,l.min?dur(l.min):""].filter(Boolean).join(", ");
+  if(l.m==="tour")return `<div class="walk">${esc(l.label||"De carro com a agência")}, ${dur(l.min)}</div>`;
+  const segs=l.segs.length?l.segs.map(([k,to])=>`${chip(k)}<span class="to">até ${esc(to)}</span>`).join(""):`<span class="walk">Transporte, linhas a definir</span>`;
+  const meta=[l.fare!=null?money(l.fare):`<span class="muted">valor a definir</span>`,l.min?dur(l.min):""].filter(Boolean).join(", ");
   return `<div class="legline">${segs}</div><div class="legmeta">${meta}</div>`;
 }
 function legRail(l){
@@ -326,7 +229,7 @@ function legRail(l){
   return `<div class="bar-v" style="--grad:${g}"></div>`;
 }
 const travel=l=>!l?"transit":l.m==="w"?"walking":l.m==="tour"?"driving":"transit";
-const query=s=>s.home?(addr()||"Shibuya Station, Tokyo"):(s.q||`${s.n}, Tokyo`);
+const query=s=>s.home?(addr()||C().home.q):(s.q||`${s.n}, ${C().area}`);
 const goURL=s=>`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query(s))}&travelmode=${travel(s.leg)}`;
 const seeURL=s=>`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query(s))}`;
 
@@ -339,15 +242,14 @@ const DB={db:null,
     r.onerror=()=>res()}catch(e){res()}})},
   put(k,v){try{this.db.transaction("fotos","readwrite").objectStore("fotos").put(v,k)}catch(e){}},
   del(k){try{this.db.transaction("fotos","readwrite").objectStore("fotos").delete(k)}catch(e){}}};
-const WTERM={"Aeroporto de Haneda": "Haneda Airport", "Estação de Shibuya": "Shibuya Station", "Meiji Jingu": "Meiji Shrine", "Takeshita Street": "Takeshita Street", "Harakado": "Harakado Tokyu Plaza Harajuku", "Omotesando Hills": "Omotesando Hills", "Miyashita Park": "Miyashita Park Shibuya", "Shibuya Sky": "Shibuya Scramble Square", "Hachiko": "Hachikō", "Shibuya 109": "Shibuya 109", "Center-Gai": "Center Gai", "Nintendo Tokyo": "Nintendo Tokyo", "Pokémon Center": "Pokémon Center store", "Shibuya Parco": "Shibuya Parco", "Nonbei Yokocho": "Nonbei Yokocho Shibuya", "Shibuya Crossing": "Shibuya Crossing", "Tokyo Disneyland": "Tokyo Disneyland", "Tokyo DisneySea": "Tokyo DisneySea", "Gōtoku-ji": "Gōtoku-ji", "Escadaria Your Name": "Suga Shrine Shinjuku", "Shinjuku Gyoen": "Shinjuku Gyo-en", "Prefeitura de Tóquio": "Tokyo Metropolitan Government Building", "Godzilla Head": "Shinjuku Toho Building", "Tokyu Kabukicho Tower": "Tokyu Kabukicho Tower", "Kabukicho": "Kabukichō", "Golden Gai": "Golden Gai", "Cross Shinjuku Vision": "Cross Shinjuku Vision", "Omoide Yokocho": "Omoide Yokochō", "Tokyo Tower": "Tokyo Tower", "Templo Zojoji": "Zōjō-ji", "teamLab Borderless": "teamLab Borderless", "Azabudai Hills": "Azabudai Hills", "Rainbow Bridge": "Rainbow Bridge (Tokyo)", "Odaiba Marine Park": "Odaiba Marine Park", "Estátua da Liberdade": "Statue of Liberty Odaiba", "Daikoku Parking Area": "Daikoku Parking Area", "Sensō-ji": "Sensō-ji", "Nakamise": "Nakamise-dōri", "Rio Sumida": "Sumida River", "Tokyo Skytree": "Tokyo Skytree", "The Matcha Tokyo": "Tokyo Solamachi", "Ueno Park": "Ueno Park", "Ameyoko": "Ameya-Yokochō", "Akihabara": "Akihabara", "Tsukiji Outer Market": "Tsukiji Outer Market", "Hamarikyu": "Hama-rikyū Gardens", "Ginza Six": "Ginza Six", "Yurakucho": "Yūrakuchō", "Palácio Imperial": "Tokyo Imperial Palace", "Marunouchi": "Marunouchi", "Estação de Tóquio": "Tokyo Station", "Busta Shinjuku": "Busta Shinjuku"};
-const wikiFor=it=>it.home?null:(WTERM[it.n]||null);
+const wikiFor=it=>it.home?null:(it.w!==undefined?(it.w||null):(WTERM[it.n]||null));
 const WK=(()=>{try{return JSON.parse(localStorage.getItem("wk"))||{}}catch(e){return {}}})();
 const saveWK=()=>{try{localStorage.setItem("wk",JSON.stringify(WK))}catch(e){}};
 const pend={};
 function wq(host,s){return fetch(`https://${host}.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrsearch=${encodeURIComponent(s)}&gsrlimit=1&prop=pageimages|info&inprop=url&piprop=thumbnail|name&pithumbsize=900`)
   .then(r=>r.json()).then(d=>{const p=Object.values((d.query||{}).pages||{})[0];return p&&p.thumbnail&&!/logo|\.svg/i.test(p.pageimage||"")?{src:p.thumbnail.source,url:p.fullurl}:null}).catch(()=>undefined)}
 function wiki(it){const term=wikiFor(it);if(!term)return Promise.resolve(null);if(term in WK)return Promise.resolve(WK[term]);
-  if(!pend[term])pend[term]=wq("en",term).then(r=>r===null&&it.ja?wq("ja",it.ja):r).then(r=>{delete pend[term];if(r!==undefined){WK[term]=r;saveWK()}return r||null});
+  if(!pend[term])pend[term]=wq("en",term).then(r=>r===null&&it.ja?wq(C().wl||"ja",it.ja):r).then(r=>{delete pend[term];if(r!==undefined){WK[term]=r;saveWK()}return r||null});
   return pend[term]}
 const wikiOf=it=>{const t=wikiFor(it);return t&&WK[t]?WK[t]:null};
 const waiting=it=>{const t=wikiFor(it);return !!t&&!(t in WK)};
@@ -390,7 +292,7 @@ function editPhoto(k,name,rerender){
 let view={city:null,day:0,open:null,filter:"all",vid:null};
 
 function home(){
-  const fl=[["all","Todos"],["🇯🇵","🇯🇵"],["🇰🇷","🇰🇷"]];
+  const fl=[["all","Todos"],...[...new Set(TRIP.cities.map(c=>c.flag))].map(f=>[f,f])];
   const cities=TRIP.cities.filter(c=>view.filter==="all"||c.flag===view.filter);
   $("#app").innerHTML=`
    <div class="top"><h1>Japão 2026</h1>
@@ -398,7 +300,7 @@ function home(){
    <div class="cities">${cities.map(c=>c.days?`
     <div class="city${coverOf(c)?" has":""}" data-c="${c.id}" role="button" tabindex="0">${coverOf(c)?`<img class="cimg" src="${esc(coverOf(c))}" alt="">`:""}<span class="kanji">${c.kanji}</span>
      <div class="name">${c.flag} ${esc(c.name)}</div><div class="dates">${c.dates}</div>
-     <div class="stat">${c.days.length} dias, ${yen(cityFare(c))} em transporte</div>
+     <div class="stat">${c.days.length>1?c.days.length+" dias":"1 dia"}${cityFare(c)?`, ${money(cityFare(c),c)} em transporte`:""}</div>
      <button class="cover-edit" data-cover="${c.id}">Foto</button></div>`:`
     <div class="city soon"><span class="kanji ja">${c.kanji}</span>
      <div class="name" style="font-size:20px">${c.flag} ${esc(c.name)}</div><div class="dates muted">${c.dates}</div>
@@ -426,40 +328,40 @@ function city(){
   const missing=legs(day).some(l=>l.m==="t"&&l.fare==null);
 
   let tl="";
-  if(day.start)tl+=row("home",`<div class="stop"><div class="n">Airbnb</div><div class="t">${day.depart?esc(day.depart):"Saída"}</div></div>`,"家");
+  if(day.start)tl+=row("home",`<div class="stop"><div class="n">${esc(c.home.n)}</div><div class="t">${day.depart?esc(day.depart):"Saída"}</div></div>`,"家");
   else if(day.depart)tl+=note(day.depart);
   day.items.forEach((it,i)=>{
     if(it.txt){tl+=note(it.txt);return}
     if(it.alt){tl+=`<li class="row alt"><div class="rail">${legRail(it.leg)}</div><div class="body"><div class="label">${esc(it.alt)}</div>${legBody(it.leg)}</div></li>`;return}
     if(it.leg)tl+=legRow(it.leg);
-    const n=it.home?"Airbnb":it.n,isDone=!!done[key(i)],num=day.items.slice(0,i+1).filter(x=>x.n).length;
+    const n=it.home?c.home.n:it.n,isDone=!!done[key(i)],num=day.items.slice(0,i+1).filter(x=>x.n).length;
     const open=view.open===i;
     tl+=`<li class="row${isDone?" done":""}"><div class="rail"><div class="dot${it.home?" home":""}${i===nextIdx?" next":""}">${it.home?"家":num}</div></div>
       <div><div class="srow"><button class="stop" data-o="${i}" aria-expanded="${open}"><div class="n">${esc(n)}</div>${it.time||it.info||it.vids?`<div class="t">${esc([it.time,it.info,it.vids?(it.vids.length>1?it.vids.length+" vídeos":"1 vídeo"):""].filter(Boolean).join(", "))}</div>`:""}</button>${open?"":thumb(i,it)}</div>
       ${open?detail(it,i,isDone):""}</div></li>`;
   });
-  if(day.end){tl+=legRow(day.end);tl+=row("home",`<div class="stop"><div class="n">Airbnb</div><div class="t">Fim do dia</div></div>`,"家")}
+  if(day.end){tl+=legRow(day.end);tl+=row("home",`<div class="stop"><div class="n">${esc(c.home.n)}</div><div class="t">Fim do dia</div></div>`,"家")}
 
   const nx=day.items[nextIdx];
   const focus=nx?`<section class="focus" aria-label="Próxima parada">${big(nextIdx,nx,false)}
      <div class="eyebrow">${day.d===today?"Agora":"Primeira parada pendente"}</div>
-     <h3>${esc(nx.home?"Airbnb":nx.n)}</h3>${nx.ja?`<div class="jn ja">${esc(nx.ja)}</div>`:""}
+     <h3>${esc(nx.home?c.home.n:nx.n)}</h3>${nx.ja?`<div class="jn ja">${esc(nx.ja)}</div>`:""}
      ${nx.leg?`<div class="how">${legBody(nx.leg)}</div>`:""}
      ${nx.note?`<p>${esc(nx.note)}</p>`:""}
      <div class="acts"><a class="btn go" href="${goURL(nx)}" target="_blank" rel="noopener">Ir</a>
-      <button class="btn" data-ja="${nextIdx}" aria-label="Mostrar em japonês">日本語</button>
+      <button class="btn" data-ja="${nextIdx}" aria-label="Mostrar no idioma local">${c.lang}</button>
       <button class="btn" data-d="${nextIdx}">Feito</button></div></section>`
    :`<section class="focus alldone"><div class="eyebrow">Dia concluído</div><p>Todas as paradas foram marcadas.</p></section>`;
 
   $("#app").innerHTML=`
    <div class="bar"><div class="bar-row"><button class="back" id="back" aria-label="Voltar">←</button>
-     <div class="bar-title">${c.flag} ${esc(c.name)}</div><div class="bar-total">${yen(cityFare(c))} no Suica</div></div>
+     <div class="bar-title">${c.flag} ${esc(c.name)}</div><div class="bar-total">${cityFare(c)?`${money(cityFare(c))} no ${c.card}`:""}</div></div>
     <nav class="days" aria-label="Dias">${c.days.map((d,i)=>{const x=dt(d.d);return `<button class="dchip${d.d===today?" today":""}" aria-current="${i===view.day}" data-day="${i}"><b>${String(x.getDate()).padStart(2,"0")}</b><span>${DOWS[x.getDay()]}</span></button>`}).join("")}</nav></div>
    <div class="day" id="day">
     <div class="dayhead"><h2>${DOW[D.getDay()]}, ${D.getDate()} de novembro</h2><div class="sub">${esc(day.label||"")}</div>
-     <div class="stats"><div><b>${yen(fare)}</b><span class="muted">${missing?"transporte, falta um trecho":"em transporte"}</span></div>
+     <div class="stats">${fare||legs(day).some(l=>l.m==="t")?`<div><b>${fare?money(fare):"A definir"}</b><span class="muted">${fare&&missing?"transporte, falta um trecho":"em transporte"}</span></div>`:""}
       <div><b>${dist(dayKm(day))}</b><span class="muted">no total</span></div>
-      ${alt?`<div><b>${yen(fare-legs(day).find(l=>l.segs&&l.segs[0]&&l.segs[0][0]==="B01").fare+alt.leg.fare)}</b><span class="muted">no plano B</span></div>`:""}</div></div>
+      ${alt?`<div><b>${money(fare-legs(day).find(l=>l.segs&&l.segs[0]&&l.segs[0][0]==="B01").fare+alt.leg.fare)}</b><span class="muted">no plano B</span></div>`:""}</div></div>
     ${focus}
     <ol class="tl">${tl}</ol>
     <details class="map" id="mapd"${store.get("mapa")?" open":""}><summary>Mapa do dia</summary><div class="mapbox">${mapSVG(day)}</div></details>
@@ -469,7 +371,7 @@ function city(){
   document.querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>{view.day=+b.dataset.day;view.open=null;view.vid=null;city()});
   document.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{const i=+b.dataset.o;view.open=view.open===i?null:i;view.vid=null;city()});
   document.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{const k=key(+b.dataset.d);if(done[k])delete done[k];else done[k]=1;store.set("feito",done);view.open=null;city()});
-  document.querySelectorAll("[data-ph]").forEach(b=>b.onclick=()=>{const i=+b.dataset.ph,it=day.items[i];editPhoto(key(i),it.home?"Airbnb":it.n,city)});
+  document.querySelectorAll("[data-ph]").forEach(b=>b.onclick=()=>{const i=+b.dataset.ph,it=day.items[i];editPhoto(key(i),it.home?c.home.n:it.n,city)});
   document.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{view.vid=b.dataset.v||null;city()});
   document.querySelectorAll("[data-ja]").forEach(b=>b.onclick=()=>showJa(day.items[+b.dataset.ja]));
   $("#mapd").ontoggle=e=>store.set("mapa",e.target.open);
@@ -502,7 +404,7 @@ function city(){
      ${(it.links||[]).map(([l,u])=>`<p><a href="${u}" target="_blank" rel="noopener">${esc(l)} ↗</a></p>`).join("")}
      <div class="acts"><a class="btn sm" href="${goURL(it)}" target="_blank" rel="noopener">Ir</a>
       <a class="btn sm" href="${seeURL(it)}" target="_blank" rel="noopener">Fotos</a>
-      <button class="btn sm" data-ja="${i}">日本語</button>
+      <button class="btn sm" data-ja="${i}">${c.lang}</button>
       <button class="btn sm" data-ph="${i}">Foto</button>
       <button class="btn sm" data-d="${i}">${isDone?"Desfazer":"Feito"}</button></div></div>`;
   }
@@ -512,13 +414,13 @@ function showJa(it){
   const o=$("#jaov");
   if(it.home&&!addr()){
     o.innerHTML=`<div><div class="small" style="margin:0 0 14px">O endereço da hospedagem fica salvo só neste aparelho.</div>
-     <input id="addr" class="field" placeholder="Cole o endereço em japonês" autocomplete="off">
+     <input id="addr" class="field" placeholder="Cole o endereço da hospedagem" autocomplete="off">
      <div class="acts" style="justify-content:center"><button class="btn go" id="addok">Salvar</button><button class="btn" id="jac">Fechar</button></div></div>`;
     o.hidden=false;$("#addr").focus();o.onclick=null;
-    $("#addok").onclick=()=>{const v=$("#addr").value.trim();if(v){try{localStorage.setItem("endereco",v)}catch(e){}}o.hidden=true;if(v)showJa(it)};
+    $("#addok").onclick=()=>{const v=$("#addr").value.trim();if(v){try{localStorage.setItem("endereco-"+C().id,v)}catch(e){}}o.hidden=true;if(v)showJa(it)};
     $("#jac").onclick=()=>{o.hidden=true};return;
   }
-  o.innerHTML=`<div><div class="big">${esc(it.home?addr():(it.ja||it.n))}</div><div class="small">${esc(it.home?"Airbnb":it.n)}</div>
+  o.innerHTML=`<div><div class="big">${esc(it.home?addr():(it.ja||it.n))}</div><div class="small">${esc(it.home?C().home.n:it.n)}</div>
    <button class="btn close" id="jac">Fechar</button></div>`;
   o.hidden=false;$("#jac").focus();
   o.onclick=()=>{o.hidden=true};
@@ -526,9 +428,9 @@ function showJa(it){
 
 function mapSVG(day){
   const pts=[];
-  if(day.start)pts.push({p:HOME.p,home:1});
-  day.items.forEach(it=>{if(it.n)pts.push({p:it.p,leg:it.leg});else if(it.home)pts.push({p:HOME.p,home:1,leg:it.leg})});
-  if(day.end)pts.push({p:HOME.p,home:1,leg:day.end});
+  const HP=C().home.p;if(day.start)pts.push({p:HP,home:1});
+  day.items.forEach(it=>{if(it.n)pts.push({p:it.p,leg:it.leg});else if(it.home)pts.push({p:HP,home:1,leg:it.leg})});
+  if(day.end)pts.push({p:HP,home:1,leg:day.end});
   const W=340,H=260,pad=26;
   const lat0=pts.reduce((s,x)=>s+x.p[0],0)/pts.length,k=Math.cos(lat0*Math.PI/180);
   const xs=pts.map(x=>x.p[1]*k),ys=pts.map(x=>-x.p[0]);
