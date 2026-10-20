@@ -399,6 +399,20 @@ let toastT;function toast(t,act){const el=$("#toast");el.innerHTML=`<span>${esc(
 const rerender=()=>view.city?city():CUR?home():trips();
 function reloadApp(){const h=location.hash;location.replace(location.pathname+"?v="+Date.now()+h)}
 
+/* google imagens dentro do app (Programmable Search Element) */
+const GCX="";
+let gReady=null,gPending=null;
+function googleImages(q){
+  if(!GCX)return Promise.resolve(null);
+  if(!gReady)gReady=new Promise((res,rej)=>{
+    window.__gcse={parsetags:"explicit",initializationCallback:()=>{
+      let box=document.getElementById("gcsebox");if(!box){box=document.createElement("div");box.id="gcsebox";box.hidden=true;document.body.appendChild(box)}
+      google.search.cse.element.render({div:"gcsebox",tag:"searchresults-only",gname:"fotos",attributes:{enableImageSearch:true,defaultToImageSearch:true,disableWebSearch:true,imageSearchResultSetSize:"large",enableHistory:false}});res()},
+      searchCallbacks:{image:{ready:(name,qq,promos,results)=>{if(gPending){gPending(results||[]);gPending=null}return true}}}};
+    loadScript("https://cse.google.com/cse.js?cx="+GCX).catch(rej)});
+  return gReady.then(()=>new Promise(res=>{const t=setTimeout(()=>{gPending=null;res(null)},8000);
+    gPending=r=>{clearTimeout(t);res(r.map(x=>{const full=(x.image&&x.image.url)||x.url,thumb=(x.thumbnailImage&&x.thumbnailImage.url)||full;return full?{full,thumb}:null}).filter(Boolean))};
+    google.search.cse.element.getElement("fotos").execute(q)}))}
 function editPhoto(k,name,after,query){
   query=query||name;
   let cur=photos[k]||imgSrc(k.startsWith("capa-")?ED.capas[k.slice(5)]:ED.fotos[k]);
@@ -406,8 +420,8 @@ function editPhoto(k,name,after,query){
     ${cur?`<img class="ph" src="${esc(cur)}" alt="">`:""}
     <div class="linkrow"><input id="psearch" class="field" type="search" value="${esc(query)}" autocomplete="off" aria-label="Pesquisar fotos"><button class="btn" id="pgo">Buscar</button></div>
     <div class="pres" id="pres" aria-live="polite"></div>
-    <a class="btn wide" id="pgoogle" href="#" target="_blank" rel="noopener">Pesquisar no Google Imagens ↗</a>
-    <div class="hint left" style="margin-top:8px">No Google, toque e segure a foto, copie a imagem ou o endereço dela e volte aqui para colar.</div>
+    <a class="btn sm" id="pgoogle" href="#" target="_blank" rel="noopener">abrir no google imagens ↗</a>
+    <div class="hint left" style="margin-top:8px">${GCX?"":"no google, toque e segure a foto, copie e volte aqui para colar."}</div>
     <div class="acts" style="margin-top:6px"><button class="btn go" id="ppaste" style="flex:1">Colar</button><label class="btn" for="pfile">Galeria</label><input id="pfile" type="file" accept="image/*" hidden></div>
     <div class="linkrow" style="margin-top:8px"><input id="purl" class="field" type="text" inputmode="url" placeholder="Ou cole o link da imagem" autocomplete="off" autocapitalize="off"><button class="btn" id="pok">Usar</button></div>
     <div class="pmsg" id="pmsg" aria-live="polite"></div>
@@ -419,8 +433,9 @@ function editPhoto(k,name,after,query){
     dropLocal();DB.put(k,{blob:sb});photos[k]=URL.createObjectURL(sb);
     if(canShare()){msg("Enviando para o grupo…");try{const ref=await uploadFb(sb);await saveOps([opFor(k,ref)]);dropLocal()}catch(e){toast("Não consegui enviar a foto. Ficou salva neste aparelho.")}}
     close()};
-  const setLink=u=>{u=u.trim();if(!/^https?:\/\//.test(u))return msg("Cole um link que comece com http.");msg("Abrindo o link…");
+  const setLink=(u,alt)=>{u=u.trim();if(!/^https?:\/\//.test(u))return msg("Cole um link que comece com http.");msg("Abrindo a foto…");
     const im=new Image();im.onload=async()=>{dropLocal();await saveOps([opFor(k,u)]);close()};
+    if(alt&&alt!==u){im.onerror=()=>setLink(alt);im.src=u;return}
     im.onerror=()=>msg("Não consegui abrir essa imagem. Use o link direto da foto, de preferência terminando em .jpg, .png ou .webp.");im.src=u};
   function onPaste(e){const items=[...((e.clipboardData||{}).items||[])];const img=items.find(x=>x.type.startsWith("image/"));
     if(img){e.preventDefault();setBlob(img.getAsFile());return}
@@ -430,12 +445,15 @@ function editPhoto(k,name,after,query){
   $("#pok").onclick=()=>setLink($("#purl").value);
   const gUrl=()=>"https://www.google.com/search?tbm=isch&q="+encodeURIComponent($("#psearch").value);
   $("#pgoogle").href=gUrl();$("#psearch").oninput=()=>$("#pgoogle").href=gUrl();
-  const search=async()=>{const q=$("#psearch").value.trim();if(!q)return;const box=$("#pres");box.innerHTML=`<div class="hint left">Buscando fotos…</div>`;
+  const show=(list,src)=>{const box=$("#pres");
+    box.innerHTML=list.length?list.map((x,i)=>`<button class="pick" data-i="${i}"><img src="${esc(x.thumb)}" alt="" loading="lazy"></button>`).join("")+`<div class="hint left">fotos: ${src}</div>`
+      :`<div class="hint left">nada encontrado. tente outro nome.</div>`;
+    box.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{const x=list[+b.dataset.i];setLink(x.full,x.thumb)})};
+  const search=async()=>{const q=$("#psearch").value.trim();if(!q)return;$("#pres").innerHTML=`<div class="hint left">buscando fotos…</div>`;
+    const g=await googleImages(q).catch(()=>null);if(g&&g.length)return show(g,"google imagens");
     try{const d=await (await fetch("https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=12&gsrsearch="+encodeURIComponent("filetype:bitmap "+q)+"&prop=imageinfo&iiprop=url&iiurlwidth=1000")).json();
-      const ps=Object.values((d.query||{}).pages||{}).sort((a,b)=>a.index-b.index).map(p=>(p.imageinfo||[])[0]).filter(x=>x&&x.thumburl);
-      box.innerHTML=ps.length?ps.map(x=>`<button class="pick" data-pick="${esc(x.thumburl)}"><img src="${esc(x.thumburl)}" alt="" loading="lazy"></button>`).join(""):`<div class="hint left">Nada encontrado. Tente outro nome ou use o Google Imagens.</div>`;
-      box.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>setLink(b.dataset.pick))}
-    catch(e){box.innerHTML=`<div class="hint left">Não consegui buscar agora. Use o Google Imagens.</div>`}};
+      show(Object.values((d.query||{}).pages||{}).sort((a,b)=>a.index-b.index).map(p=>(p.imageinfo||[])[0]).filter(x=>x&&x.thumburl).map(x=>({thumb:x.thumburl,full:x.thumburl})),"wikimedia")}
+    catch(e){$("#pres").innerHTML=`<div class="hint left">não consegui buscar agora. use o link do google abaixo.</div>`}};
   $("#pgo").onclick=search;$("#psearch").onkeydown=e=>{if(e.key==="Enter")search()};search();
   $("#ppaste").onclick=async()=>{
     try{if(navigator.clipboard.read){for(const item of await navigator.clipboard.read()){const tp=item.types.find(t=>t.startsWith("image/"));if(tp){setBlob(await item.getType(tp));return}}}}catch(e){}
