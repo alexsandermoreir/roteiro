@@ -731,7 +731,7 @@ function mapSheet(title,q,p){
     <div class="acts" style="flex-wrap:wrap"><a class="btn sm" href="https://www.google.com/maps/search/?api=1&query=${enc(p?p.join(","):q)}" target="_blank" rel="noopener">abrir no app do google maps ↗</a></div>`);
   $("#mx").onclick=close}
 
-const GKEY="";
+const GKEY="AIzaSyAMfQU-vTEcjFORupjqzq457A3t4EenPgc";
 const slug=t=>String(t).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
 function ensureLines(leg){if(leg&&leg.segs)leg.segs.forEach(sg=>{if(sg[3]&&!LINES[sg[0]])LINES[sg[0]]=sg[3]})}
 const whenISO=(c,day,it)=>{const m=(it&&it.time||"").match(/(\d{1,2})\s*h\s*(\d{2})?/),hh=m?m[1].padStart(2,"0"):"10",mm=m&&m[2]?m[2]:"00";
