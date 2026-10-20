@@ -303,7 +303,7 @@ h1,h2,h3,.eyebrow,.lbl,.btn,.bar-title,.city .name,.city .dates,.city .stat,.dch
 .pin{width:28px;height:28px;border-radius:14px;background:var(--accent,#24396B);color:var(--accent-ink,#fff);border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);display:grid;place-items:center;font:700 13px system-ui,sans-serif}
 .pin.home{background:#111;color:#fff;border-radius:9px}
 .pinwrap{background:none;border:0}
-.leaflet-container{font-family:inherit}.leaflet-control-attribution{font-size:10px!important}.leaflet-container img{max-width:none!important}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.segrow{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;align-items:center}.segrow .field{height:42px;padding:0 8px;font-size:14px;min-width:0}.leaflet-popup-content{margin:12px 14px}.pbtn{margin-top:8px;height:34px}
+.leaflet-container{font-family:inherit}.leaflet-control-attribution{font-size:10px!important}.leaflet-container img{max-width:none!important}details.paste{border:1px solid var(--hair);border-radius:12px;padding:10px 12px;margin:10px 0}details.paste summary{font-weight:600;font-size:14px;cursor:pointer}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.segrow{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;align-items:center}.segrow .field{height:42px;padding:0 8px;font-size:14px;min-width:0}.leaflet-popup-content{margin:12px 14px}.pbtn{margin-top:8px;height:34px}
 </style>
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
 </head>
@@ -691,7 +691,8 @@ const idle=()=>$("#jaov").hidden&&$("#ov2").hidden;
 let HOSP={},unsubH=null;
 const hospLocal=c=>{try{return JSON.parse(localStorage.getItem("hosp-"+c.id)||"{}")}catch(e){return {}}};
 const hosp=c=>c?{...hospLocal(c),...(HOSP[c.id]||{})}:{};
-const hospAddr=c=>hosp(c).endereco||(c&&c.id===(view.city&&view.city.id)?addr():"")||(c&&c.home&&c.home.q)||"";
+const hospP=c=>{const p=parseCoords(hosp(c).coords||"");return p||c.home.p};
+const hospAddr=c=>(hosp(c).coords||"").trim()||hosp(c).endereco||(c&&c.id===(view.city&&view.city.id)?addr():"")||(c&&c.home&&c.home.q)||"";
 const placeQ=(c,it)=>it.qq||(it.home?hospAddr(c):(it.q||`${it.n||it.title||""}, ${c.area}`));
 function prevStop(day,i){for(let j=i-1;j>=0;j--){const x=day.items[j];if(x.n||x.home)return x}return day.start?{home:1}:null}
 const embedURL=o=>{const b="https://maps.google.com/maps?hl=pt-BR&output=embed";
@@ -772,7 +773,21 @@ function routeSheet(c,it,prev,day){
 }
 
 const HF=c=>[["endereco","endereço","area"],["ja","endereço em "+(c.lang||"idioma local"),"area"],["estacao","estação mais próxima (para o embarque)",""],["checkin","check-in",""],["checkout","check-out",""],["anfitriao","anfitrião",""],
-  ["tel","telefone do anfitrião","tel"],["codigo","código ou senha de acesso","secret"],["wifi","wi-fi, rede e senha",""],["link","link da reserva","url"],["obs","observações","area"]];
+  ["tel","telefone do anfitrião","tel"],["codigo","código ou senha de acesso","secret"],["wifi","wi-fi, rede e senha",""],["coords","coordenadas",""],["reserva","código de confirmação da reserva",""],["link","link da reserva","url"],["obs","observações","area"]];
+function parseReserva(raw){
+  const t=String(raw).replace(/\[([^\]]*)\]\(([^)]*)\)/g,"$1 $2"),L=t.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),o={};
+  const nxt=re=>{const i=L.findIndex(x=>re.test(x));return i>=0?L[i+1]||"":""};
+  let m=t.match(/Anfitri[ãa]\(?o?\)?:\s*([^\n\[]+)/i);if(m)o.anfitriao=m[1].trim();
+  const when=re=>{const i=L.findIndex(x=>re.test(x));if(i<0)return "";const d=L[i+1]||"",h=L[i+2]||"";return (d+(/^\d{1,2}:\d{2}$/.test(h)?", "+h:"")).trim()};
+  const ci=when(/^check-?in$/i),co=when(/^check-?out$/i);if(ci)o.checkin=ci;if(co)o.checkout=co;
+  let ai=-1;L.forEach((x,i)=>{if(/^como chegar$/i.test(x))ai=i});if(ai>=0&&L[ai+1]){o.endereco=L[ai+1];const jp=(L[ai+1].match(/[\u3000-\u9fff\uff00-\uffef]+(?:[\s\u3000]*[\u3000-\u9fff0-9\uff00-\uffef]+)*/)||[""])[0].trim();if(jp)o.ja=jp}
+  m=t.match(/query=(-?\d+\.\d+)(?:%2C|,)(-?\d+\.\d+)/);if(m)o.coords=(+m[1]).toFixed(5)+", "+(+m[2]).toFixed(5);
+  const cc=nxt(/^c[óo]digo de confirma[çc][ãa]o$/i);if(cc)o.reserva=cc;
+  m=t.match(/https:\/\/www\.airbnb\.[a-z.]+\/trips\/v1\/\d+\/ro\/[A-Z0-9_]+\/[A-Z0-9]+/);if(m)o.link=m[0];
+  const a=L.findIndex(x=>/^instru[çc][õo]es do seu anfitri/i.test(x)),b=L.findIndex(x=>/^copiar endere/i.test(x));
+  let obs=a>=0?L.slice(a+1,b>a?b:a+4).join("\n"):"";const room=t.match(/https:\/\/www\.airbnb\.[a-z.]+\/rooms\/\d+/);if(room)obs+=(obs?"\n":"")+"Anúncio: "+room[0];if(obs)o.obs=obs;
+  m=t.match(/from ([A-Za-z\- ]+?) Sta/);if(m)o.estacao=m[1].trim();
+  return o}
 function hospSheet(c){
   let editing=false;
   const close=sheet2("<div id=\"hbox\"></div>",()=>rerender());
@@ -781,11 +796,13 @@ function hospSheet(c){
     const b=$("#hbox");
     const d={...hosp(c)},fields=HF(c),has=fields.some(([k])=>d[k]);if(!d.endereco){const la=addr();if(la)d.endereco=la}
     if(editing||!has){
-      b.innerHTML=head+`<div class="frm">${fields.map(([k,l,t])=>t==="area"?`<label class="lbl2">${esc(l)}<textarea class="field area" rows="2" data-f="${k}">${esc(d[k]||"")}</textarea></label>`
+      b.innerHTML=head+`<details class="paste"${has?"":" open"}><summary>colar dados da reserva do airbnb</summary><textarea class="field area" id="rpaste" rows="4" placeholder="copie o texto da reserva no airbnb e cole aqui"></textarea><button class="btn sm" id="rfill" style="margin-top:8px">preencher os campos</button></details><div class="frm">${fields.map(([k,l,t])=>t==="area"?`<label class="lbl2">${esc(l)}<textarea class="field area" rows="2" data-f="${k}">${esc(d[k]||"")}</textarea></label>`
         :`<label class="lbl2">${esc(l)}<input class="field" data-f="${k}" type="text" value="${esc(d[k]||"")}" autocomplete="off" ${t==="secret"?'autocapitalize="off"':""}></label>`).join("")}</div>
         ${has?"":`<div class="hint left">ainda não há dados salvos. o ponto aproximado no mapa é "${esc(c.home.q||c.home.n)}". preencha o endereço real do airbnb.</div>`}
         <div class="acts"><button class="btn" id="hcancel">${has?"cancelar":"fechar"}</button><button class="btn go" id="hsave" style="margin-left:auto">salvar</button></div>
         <div class="hint">${canShare()?"Fica salvo para o grupo, só quem entrou na conta vê.":"Fica salvo só neste aparelho. Entre na conta, na engrenagem, para o grupo ver."}</div>`;
+      $("#rfill").onclick=()=>{const o=parseReserva($("#rpaste").value),ks=Object.keys(o);if(!ks.length){toast("não reconheci dados de reserva nesse texto.");return}
+        ks.forEach(k=>{const el=document.querySelector(`#hbox [data-f="${k}"]`);if(el)el.value=o[k]});toast(ks.length+" campos preenchidos, confira e salve.")};
       $("#hx").onclick=close;$("#hcancel").onclick=()=>{if(has){editing=false;draw()}else close()};
       $("#hsave").onclick=async()=>{const vals={};document.querySelectorAll("#hbox [data-f]").forEach(el=>vals[el.dataset.f]=el.value.trim());
         let shared=false;if(canShare()){try{await FB.db.doc("hospedagens/"+c.id).set(vals,{merge:true});HOSP[c.id]={...d,...vals};shared=true}catch(e){}}
@@ -1154,9 +1171,9 @@ function city(){
   const dayMap=async()=>{const box=$("#mapreal");if(!box)return;
     if(box.dataset.on){if(box._m)setTimeout(()=>box._m.invalidateSize(),50);return}box.dataset.on="1";
     const P=[];let n=0;
-    if(day.start)P.push({p:c.home.p,home:1,t:c.home.n});
-    day.items.forEach(x=>{if(x.home)P.push({p:c.home.p,home:1,t:c.home.n,leg:x.leg,it:x});else if(x.n){n++;if(x.p)P.push({p:x.p,num:n,t:x.n,leg:x.leg,it:x})}});
-    if(day.end)P.push({p:c.home.p,home:1,t:c.home.n,leg:day.end});
+    if(day.start)P.push({p:hospP(c),home:1,t:c.home.n});
+    day.items.forEach(x=>{if(x.home)P.push({p:hospP(c),home:1,t:c.home.n,leg:x.leg,it:x});else if(x.n){n++;if(x.p)P.push({p:x.p,num:n,t:x.n,leg:x.leg,it:x})}});
+    if(day.end)P.push({p:hospP(c),home:1,t:c.home.n,leg:day.end});
     if(P.length<2){box.innerHTML="";return}
     box.innerHTML='<div class="hint left" style="padding:16px">carregando mapa…</div>';
     try{if(!window.L){if(!document.getElementById("lfcss")){const l=document.createElement("link");l.id="lfcss";l.rel="stylesheet";l.href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css";await new Promise(r=>{l.onload=r;l.onerror=r;document.head.appendChild(l);setTimeout(r,4000)})}
