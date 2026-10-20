@@ -222,6 +222,15 @@ details.map[open] summary::after{content:"−"}
 .gform{display:grid;gap:8px;border-top:1px dashed var(--hair);padding-top:14px;margin-top:6px}
 .field.area{height:auto;padding:12px 14px;font-family:var(--sans);resize:vertical}
 .guidebtn{margin-top:10px;gap:8px}
+.cover-edit{display:inline-flex;align-items:center;gap:6px}
+.phwrap{position:relative}
+.phcam{position:absolute;right:10px;bottom:22px;width:36px;height:36px;border-radius:18px;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.focus .phcam{bottom:24px}
+.addph{gap:6px;margin-bottom:12px}
+.pres{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0}
+.pres .hint{grid-column:1/-1}
+.pick{aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--soft)}
+.pick img{width:100%;height:100%;object-fit:cover;display:block}
 .alldone{text-align:center;padding:8px 0}
 @media (prefers-reduced-motion:no-preference){.day{animation:in .18s ease-out}@keyframes in{from{opacity:.4;transform:translateY(4px)}}}
 </style>
@@ -351,13 +360,17 @@ let toastT;function toast(t,act){const el=$("#toast");el.innerHTML=`<span>${esc(
 const rerender=()=>view.city?city():home();
 function reloadApp(){const h=location.hash;location.replace(location.pathname+"?v="+Date.now()+h)}
 
-function editPhoto(k,name,after){
+function editPhoto(k,name,after,query){
+  query=query||name;
   let cur=photos[k]||(k.startsWith("capa-")?ED.capas[k.slice(5)]:ED.fotos[k]);
   const close=sheet(`<div class="eyebrow">${k.startsWith("capa-")?"Capa":"Foto"}</div><h3>${esc(name)}</h3>
     ${cur?`<img class="ph" src="${esc(cur)}" alt="">`:""}
-    <label class="btn go wide" for="pfile">Escolher da galeria</label><input id="pfile" type="file" accept="image/*" hidden>
-    <div class="or">ou cole a imagem ou o link aqui</div>
-    <div class="linkrow"><input id="purl" class="field" type="url" inputmode="url" placeholder="https://…" autocomplete="off"><button class="btn" id="pok">Usar</button></div>
+    <div class="linkrow"><input id="psearch" class="field" type="search" value="${esc(query)}" autocomplete="off" aria-label="Pesquisar fotos"><button class="btn" id="pgo">Buscar</button></div>
+    <div class="pres" id="pres" aria-live="polite"></div>
+    <a class="btn wide" id="pgoogle" href="#" target="_blank" rel="noopener">Pesquisar no Google Imagens ↗</a>
+    <div class="hint left" style="margin-top:8px">No Google, toque e segure a foto, copie a imagem ou o endereço dela e volte aqui para colar.</div>
+    <div class="acts" style="margin-top:6px"><button class="btn go" id="ppaste" style="flex:1">Colar</button><label class="btn" for="pfile">Galeria</label><input id="pfile" type="file" accept="image/*" hidden></div>
+    <div class="linkrow" style="margin-top:8px"><input id="purl" class="field" type="text" inputmode="url" placeholder="Ou cole o link da imagem" autocomplete="off" autocapitalize="off"><button class="btn" id="pok">Usar</button></div>
     <div class="pmsg" id="pmsg" aria-live="polite"></div>
     <div class="acts">${cur?`<button class="btn" id="pdel">Remover</button>`:""}<button class="btn" id="pclose" style="margin-left:auto">Fechar</button></div>
     <div class="hint">${tok()?"Fica visível para todo o grupo.":"Fica salva só neste aparelho. Ative o GitHub nos ajustes para o grupo ver."}</div>`,()=>{document.removeEventListener("paste",onPaste);after()});
@@ -376,19 +389,34 @@ function editPhoto(k,name,after){
   document.addEventListener("paste",onPaste);
   $("#pfile").onchange=e=>{const f=e.target.files[0];if(f)setBlob(f)};
   $("#pok").onclick=()=>setLink($("#purl").value);
+  const gUrl=()=>"https://www.google.com/search?tbm=isch&q="+encodeURIComponent($("#psearch").value);
+  $("#pgoogle").href=gUrl();$("#psearch").oninput=()=>$("#pgoogle").href=gUrl();
+  const search=async()=>{const q=$("#psearch").value.trim();if(!q)return;const box=$("#pres");box.innerHTML=`<div class="hint left">Buscando fotos…</div>`;
+    try{const d=await (await fetch("https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=12&gsrsearch="+encodeURIComponent("filetype:bitmap "+q)+"&prop=imageinfo&iiprop=url&iiurlwidth=1000")).json();
+      const ps=Object.values((d.query||{}).pages||{}).sort((a,b)=>a.index-b.index).map(p=>(p.imageinfo||[])[0]).filter(x=>x&&x.thumburl);
+      box.innerHTML=ps.length?ps.map(x=>`<button class="pick" data-pick="${esc(x.thumburl)}"><img src="${esc(x.thumburl)}" alt="" loading="lazy"></button>`).join(""):`<div class="hint left">Nada encontrado. Tente outro nome ou use o Google Imagens.</div>`;
+      box.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>setLink(b.dataset.pick))}
+    catch(e){box.innerHTML=`<div class="hint left">Não consegui buscar agora. Use o Google Imagens.</div>`}};
+  $("#pgo").onclick=search;$("#psearch").onkeydown=e=>{if(e.key==="Enter")search()};search();
+  $("#ppaste").onclick=async()=>{
+    try{if(navigator.clipboard.read){for(const item of await navigator.clipboard.read()){const tp=item.types.find(t=>t.startsWith("image/"));if(tp){setBlob(await item.getType(tp));return}}}}catch(e){}
+    try{const t=await navigator.clipboard.readText();const u=(t.match(/https?:\/\/\S+/)||[""])[0];if(u)return setLink(u)}catch(e){}
+    msg("Não achei imagem nem link copiados. Toque e segure no campo de link e escolha Colar.")};
   $("#purl").onkeydown=e=>{if(e.key==="Enter")setLink(e.target.value)};
   $("#pclose").onclick=close;
   if(cur)$("#pdel").onclick=async()=>{dropLocal();await saveOps([opFor(k,null)]);close()};
 }
 
-async function parseVideo(u){
-  u=u.trim();let m=u.match(/instagram\.com\/(?:[^/?#]+\/)?(?:reel|reels|p|tv)\/([\w-]+)/);if(m)return {v:["ig",m[1]]};
-  if(!/tiktok\.com/.test(u))return {err:"Cole um link do TikTok ou do Instagram."};
+async function parseVideo(raw){
+  const u=((raw||"").match(/https?:\/\/[^\s"'<>]+/)||[""])[0].replace(/[).,]+$/,"");
+  if(!u)return {err:"Não encontrei um link. Copie o link do vídeo no app e cole aqui."};
+  let m=u.match(/instagram\.com\/(?:[^/?#]+\/)?(?:reel|reels|p|tv)\/([\w-]+)/);if(m)return {v:["ig",m[1]]};
+  if(!/tiktok\.com/.test(u))return {err:"Esse link não é do TikTok nem do Instagram."};
   m=u.match(/\/(?:video|photo)\/(\d{8,})/);let title="";
-  try{const j=await (await fetch("https://www.tiktok.com/oembed?url="+encodeURIComponent(u))).json();
-    title=j.author_name?"@"+j.author_name:"";if(!m){const x=(j.html||"").match(/data-video-id="(\d+)"/);if(x)m=[0,x[1]]}}catch(e){}
-  if(!m)return {err:"Não consegui ler esse link curto. Abra o vídeo no navegador e copie o endereço completo."};
-  return {v:["tt",m[1]],title}}
+  try{const r=await fetch("https://www.tiktok.com/oembed?url="+encodeURIComponent(u));const j=await r.json();
+    title=j.author_name?"@"+j.author_name:"";if(!m){const x=(j.html||"").match(/data-video-id="(\d+)"/)||(j.embed_product_id?[0,j.embed_product_id]:null);if(x)m=[0,x[1]]}}catch(e){}
+  if(m)return {v:["tt",m[1]],title};
+  return {v:["tl",u],title:"",note:"Link curto: o vídeo vai abrir no app do TikTok."}}
 /* Guia do lugar: vídeos, photo spots, poses e notas */
 const KINDS=[["videos","Vídeos"],["spots","Spots"],["poses","Poses"],["notas","Notas"]];
 function guideData(c,it,k){
@@ -408,10 +436,11 @@ function guide(c,it,k,name,startTab){
     const L=g[tab];let h="";
     if(tab==="videos"){
       h=L.length?`<div class="vids">${L.map(([p,id,title])=>{const url=p==="tt"?`https://www.tiktok.com/@/video/${id}`:`https://www.instagram.com/reel/${id}/`;
+        if(p==="tl")return `<div class="vslide"><a class="vtile tt" href="${esc(id)}" target="_blank" rel="noopener"><span class="plat">TikTok</span><span class="play" aria-hidden="true"></span><span class="vt">${esc(title||"Abrir no app")}</span></a><div class="pact"><a href="${esc(id)}" target="_blank" rel="noopener">Abrir no app ↗</a>${ed()?`<button class="gx" data-vdel="${esc(id)}">Remover</button>`:""}</div></div>`;
         const inner=playing===id?`<div class="player ${p}"><iframe src="${p==="tt"?`https://www.tiktok.com/player/v1/${id}?description=0&music_info=0&rel=0`:`https://www.instagram.com/reel/${id}/embed`}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen title="${esc(title||"")}"></iframe></div>`
           :`<button class="vtile ${p}" data-play="${id}"><span class="plat">${p==="tt"?"TikTok":"Reels"}</span><span class="play" aria-hidden="true"></span><span class="vt">${esc(title||"")}</span></button>`;
         return `<div class="vslide">${inner}<div class="pact"><a href="${url}" target="_blank" rel="noopener">Abrir no app ↗</a>${ed()?`<button class="gx" data-vdel="${id}">Remover</button>`:""}</div></div>`}).join("")}</div>${L.length>1?`<div class="hint left">Arraste para o lado para ver os outros.</div>`:""}`:empty();
-      if(ed())h+=`<div class="gform"><input id="gurl" class="field" type="url" inputmode="url" placeholder="Link do TikTok ou do Reels" autocomplete="off">
+      if(ed())h+=`<div class="gform"><div class="linkrow"><input id="gurl" class="field" type="text" placeholder="Link do TikTok ou do Reels" autocomplete="off" autocapitalize="off"><button class="btn" id="gpaste">Colar</button></div>
         <input id="gtit" class="field" type="text" placeholder="Título curto (opcional)" autocomplete="off"><button class="btn go" id="gadd">Adicionar vídeo</button></div>`;
     }else{
       h=L.length?L.map(x=>`<div class="gcard">${img(x)}<p>${esc(x.t)}</p>${x.p?`<a class="maplink" href="${mapsAt(x.p)}" target="_blank" rel="noopener">Abrir no mapa ↗</a>`:""}${rm(tab,x.id)}</div>`).join(""):empty();
@@ -437,10 +466,11 @@ function guide(c,it,k,name,startTab){
     document.querySelectorAll("[data-vdel]").forEach(b=>b.onclick=async()=>{await saveOps([{t:"vid-",k,id:b.dataset.vdel}]);redraw()});
     document.querySelectorAll("[data-gdel]").forEach(b=>b.onclick=async()=>{const [kind,id]=b.dataset.gdel.split(":");await saveOps([{t:"g-",k,kind,id}]);redraw()});
     const f=$("#gfile");if(f)f.onchange=e=>{fileBlob=e.target.files[0]||null;if(fileBlob)msg("Imagem escolhida: "+fileBlob.name)};
+    const gp=$("#gpaste");if(gp)gp.onclick=async()=>{try{$("#gurl").value=await navigator.clipboard.readText()}catch(e){msg("O navegador não liberou a área de transferência. Toque e segure no campo e escolha Colar.")}};
     const add=$("#gadd");if(!add)return;
     add.onclick=async()=>{
       if(tab==="videos"){const u=$("#gurl").value;if(!u.trim())return;msg("Lendo o link…");const r=await parseVideo(u);if(r.err)return msg(r.err);
-        await saveOps([{t:"vid+",k,v:[...r.v,$("#gtit").value.trim()||r.title||(r.v[0]==="tt"?"TikTok":"Reels")]}]);return redraw()}
+        await saveOps([{t:"vid+",k,v:[...r.v,$("#gtit").value.trim()||r.title||(r.v[0]==="ig"?"Reels":"TikTok")]}]);redraw();if(r.note)toast(r.note);return}
       const t=$("#gtxt").value.trim();if(!t)return msg("Escreva um texto curto.");
       const v={id:"e"+Date.now().toString(36),t};
       const il=$("#gimg")&&$("#gimg").value.trim();if(il){if(!/^https?:\/\//.test(il))return msg("O link da imagem precisa começar com http.");v.img=il}
@@ -486,9 +516,10 @@ function settings(){
 function applyTheme(){const t=store.get("tema")||"auto",r=document.documentElement;if(t==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",t)}
 const ICON={
   gear:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>`,
+  cam:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`,
   pen:`<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`};
 const tools=()=>`<div class="tools"><button class="iconbtn" id="tedit" aria-pressed="${!!view.edit}" aria-label="Editar">${ICON.pen}</button><button class="iconbtn" id="tset" aria-label="Ajustes">${ICON.gear}</button></div>`;
-function bindTools(){$("#tedit").onclick=()=>{view.edit=!view.edit;store.set("edit",view.edit);rerender();if(view.edit)toast(view.city?"Abra uma parada: Foto troca a imagem e Guia recebe vídeos, spots, poses e notas.":"Toque em Capa para trocar a foto de uma cidade.")};$("#tset").onclick=settings}
+function bindTools(){$("#tedit").onclick=()=>{view.edit=!view.edit;store.set("edit",view.edit);rerender();if(view.edit)toast("No Guia de cada parada aparecem os campos para adicionar vídeos, spots, poses e notas.")};$("#tset").onclick=settings}
 
 /* estado */
 let view={city:null,day:0,open:null,filter:"all",vid:null,edit:!!store.get("edit")};
@@ -503,13 +534,13 @@ function home(){
     <div class="city${coverOf(c)?" has":""}" data-c="${c.id}" role="button" tabindex="0">${coverOf(c)?`<img class="cimg" src="${esc(coverOf(c))}" alt="">`:""}<span class="kanji">${c.kanji}</span>
      <div class="name">${c.flag} ${esc(c.name)}</div><div class="dates">${c.dates}</div>
      <div class="stat">${c.days.length>1?c.days.length+" dias":"1 dia"}${cityFare(c)?`, ${money(cityFare(c),c)} em transporte`:""}</div>
-     ${view.edit?`<button class="cover-edit" data-cover="${c.id}">Capa</button>`:""}</div>`:`
+     <button class="cover-edit" data-cover="${c.id}" aria-label="Trocar capa de ${esc(c.name)}">${ICON.cam}<span>Capa</span></button></div>`:`
     <div class="city soon"><span class="kanji ja">${c.kanji}</span>
      <div class="name" style="font-size:20px">${c.flag} ${esc(c.name)}</div><div class="dates muted">${c.dates}</div>
      <div class="stat">Roteiro em breve</div></div>`).join("")}</div>`;
   document.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{view.filter=b.dataset.f;home()});
   document.querySelectorAll("[data-c]").forEach(b=>{b.onclick=e=>{if(!e.target.closest(".cover-edit"))openCity(b.dataset.c)};b.onkeydown=e=>{if(e.key==="Enter")openCity(b.dataset.c)}});
-  document.querySelectorAll("[data-cover]").forEach(b=>b.onclick=()=>{const c=TRIP.cities.find(x=>x.id===b.dataset.cover);editPhoto("capa-"+c.id,c.name,home)});
+  document.querySelectorAll("[data-cover]").forEach(b=>b.onclick=()=>{const c=TRIP.cities.find(x=>x.id===b.dataset.cover);editPhoto("capa-"+c.id,c.name,home,c.area)});
   bindTools();
 }
 
@@ -575,7 +606,7 @@ function city(){
   document.querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>{view.day=+b.dataset.day;view.open=null;view.vid=null;city()});
   document.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{const i=+b.dataset.o;view.open=view.open===i?null:i;view.vid=null;city()});
   document.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{const k=key(+b.dataset.d);if(done[k])delete done[k];else done[k]=1;store.set("feito",done);view.open=null;city()});
-  document.querySelectorAll("[data-ph]").forEach(b=>b.onclick=()=>{const it=day.items[+b.dataset.ph];editPhoto(ek(it),it.home?c.home.n:it.n,city)});
+  document.querySelectorAll("[data-ph]").forEach(b=>b.onclick=()=>{const it=day.items[+b.dataset.ph];editPhoto(ek(it),it.home?c.home.n:it.n,city,wikiFor(it)||`${it.n} ${c.area}`)});
   document.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{const it=day.items[+b.dataset.g];guide(c,it,ek(it),it.home?c.home.n:it.n)});
   bindTools();
   document.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{view.vid=b.dataset.v||null;city()});
@@ -593,9 +624,9 @@ function city(){
     if(waiting(it))return `<img class="th" data-wk="${i}" alt="">`;
     return `<div class="th tile ja" aria-hidden="true">${tileTxt(it)}</div>`}
   function big(i,it,credit){const k=ek(it),src=photoOf(k,it),w=!photos[k]&&!ED.fotos[k]&&!it.img?wikiOf(it):null;
-    if(src)return `<img class="ph" src="${esc(src)}" alt="">${credit&&w?`<a class="credit" href="${w.url}" target="_blank" rel="noopener">Foto: Wikipedia</a>`:""}`;
-    if(waiting(it))return `<img class="ph" data-wkb="${i}" alt="">`;
-    return ""}
+    if(src)return `<div class="phwrap"><img class="ph" src="${esc(src)}" alt=""><button class="phcam" data-ph="${i}" aria-label="Trocar foto">${ICON.cam}</button></div>${credit&&w?`<a class="credit" href="${w.url}" target="_blank" rel="noopener">Foto: Wikipedia</a>`:""}`;
+    if(waiting(it))return `<div class="phwrap"><img class="ph" data-wkb="${i}" alt=""><button class="phcam" data-ph="${i}" aria-label="Trocar foto">${ICON.cam}</button></div>`;
+    return it.home?"":`<button class="btn sm addph" data-ph="${i}">${ICON.cam} Adicionar foto</button>`}
   function detail(it,i,isDone){let gn=0;
     return `<div class="detail">${big(i,it,true)}${it.ja?`<p class="ja muted">${esc(it.ja)}</p>`:""}${it.note?`<p>${esc(it.note)}</p>`:""}${it.fee?`<p>Ingresso: ${esc(it.fee)}</p>`:""}
      ${(it.links||[]).map(([l,u])=>`<p><a href="${u}" target="_blank" rel="noopener">${esc(l)} ↗</a></p>`).join("")}
@@ -603,7 +634,6 @@ function city(){
       <a class="btn sm" href="${seeURL(it)}" target="_blank" rel="noopener">Fotos</a>
       <button class="btn sm" data-ja="${i}">${c.lang}</button>
       <button class="btn sm" data-g="${i}">Guia${(gn=gCount(guideData(c,it,ek(it))))?` <span class="cnt">${gn}</span>`:""}</button>
-      ${view.edit?`<button class="btn sm edit" data-ph="${i}">Foto</button>`:""}
       <button class="btn sm" data-d="${i}">${isDone?"Desfazer":"Feito"}</button></div></div>`;
   }
 }
