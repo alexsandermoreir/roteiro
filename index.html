@@ -195,7 +195,7 @@ details.map[open] summary::after{content:"−"}
 .bar-total+.tools{margin-left:4px}
 .bar-total:empty+.tools{margin-left:auto}
 .btn.edit{border-style:dashed}
-.jaov.sheetmode{place-items:start center;overflow-y:auto;text-align:left}
+.jaov.sheetmode{place-items:start center;overflow-y:auto;text-align:left;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}.jaov.sheetmode .sheet{padding-bottom:70px}
 .sheet .set{border-top:1px solid var(--hair);padding:14px 0}
 .sheet .lbl{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:10px}
 .hint.left{text-align:left;margin:0 0 10px;display:block}
@@ -685,7 +685,7 @@ const gCount=a=>a.length;
 const removeItem=(k,x)=>x.src==="vid"?saveOps([{t:"vid-",k,id:x.id}]):saveOps([{t:"g-",k,kind:x.kind,id:x.id}]);
 
 /* ===== camadas extras (mapa, rota, hospedagem) ===== */
-function sheet2(html,onClose){const o=$("#ov2");o.innerHTML=`<div class="sheet" role="document">${html}</div>`;o.hidden=false;
+function sheet2(html,onClose){const o=$("#ov2");o.className="jaov sheetmode";o.innerHTML=`<div class="sheet" role="document">${html}</div>`;o.hidden=false;
   const close=()=>{o.hidden=true;o.innerHTML="";onClose&&onClose()};o.onclick=e=>{if(e.target===o)close()};o.scrollTop=0;return close}
 const idle=()=>$("#jaov").hidden&&$("#ov2").hidden;
 let HOSP={},unsubH=null;
