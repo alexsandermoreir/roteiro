@@ -1016,12 +1016,13 @@ const tripDays=()=>{const out=[];(CUR?CUR.cities:[]).filter(c=>c.days).forEach(c
 const dayTitle=(c,day)=>{const D=dt(day.d);return `${DOWS[D.getDay()]}, ${String(D.getDate()).padStart(2,"0")}/${String(D.getMonth()+1).padStart(2,"0")}`};
 function menuSheet(){
   const close=sheet(`<div class="gh"><div style="flex:1"><div class="eyebrow">menu</div><h3>${esc(CUR.nome||"roteiro")}</h3></div><button class="iconbtn" id="mnx" aria-label="fechar">${ico("x",20)}</button></div>
-   <div class="menul">${[["roteiro","pin","roteiro","as cidades e os dias"],["transp","nav","transportes","linhas, estações e valores por dia"],["spots","cam","guia de spots","coordenadas e referências por dia"],["lista","menu","lista de locais","só nomes, dia, horário e ordem"]].map(([k,i,t,s])=>`<button class="mrow" data-mn="${k}">${ico(i,22)}<span><b>${t}</b><small>${s}</small></span></button>`).join("")}</div>`,()=>{});
+   <div class="menul">${[["roteiro","pin","roteiro","as cidades e os dias"],["transp","nav","transportes","linhas, estações e valores por dia"],["spots","cam","guia de spots","coordenadas e referências por dia"],["lista","menu","lista de locais","só nomes, dia, horário e ordem"],["compras","bag","compras","tudo o que quer comprar, por cidade"]].map(([k,i,t,s])=>`<button class="mrow" data-mn="${k}">${ico(i,22)}<span><b>${t}</b><small>${s}</small></span></button>`).join("")}</div>`,()=>{});
   $("#mnx").onclick=close;
   document.querySelectorAll("[data-mn]").forEach(b=>b.onclick=()=>{const k=b.dataset.mn;close();if(k==="roteiro"){if(view.city){view.city=null;home();scrollTo(0,0)}else rerender();return}pageView(k)})}
 function pageView(kind){
   const o=$("#ovm");MAPREFRESH=null;o.hidden=false;
-  const T={transp:"transportes",spots:"guia de spots",lista:"lista de locais"}[kind];
+  const T={transp:"transportes",spots:"guia de spots",lista:"lista de locais",compras:"compras"}[kind];
+  if(kind==="compras")(CUR?CUR.cities:[]).filter(c=>c.days).forEach(c=>fxLoad(c.cur||"¥").then(ch=>{if(ch&&!o.hidden&&$(".ovp-body")){const sc=$(".ovp-body").scrollTop;draw();$(".ovp-body").scrollTop=sc}}));
   let fotos=!!store.get("lista-fotos");
   const body=()=>{const D=tripDays();let h="";
     if(kind==="transp"){
@@ -1050,6 +1051,15 @@ function pageView(kind){
         if(!sec)return;any=true;if(c!==lastC){h+=`<h2 class="pcity">${c.flag} ${esc(c.name)}</h2>`;lastC=c}
         h+=`<section class="pday"><div class="phd"><b>${dayTitle(c,day)}</b><span class="muted">${esc(day.label||"")}</span></div>${sec}</section>`});
       if(!any)h+=`<div class="gempty">${ico("pin",30)}<p>nenhum spot guardado ainda.</p><p class="muted">adicione spots com coordenadas no guia de cada parada.</p></div>`}
+    if(kind==="compras"){
+      CUR.cities.filter(c=>c.days).forEach(c=>{const cur=c.cur||"¥",L=shopList(c).sort((a,b)=>(a.at||0)-(b.at||0)),pend=L.filter(x=>!x.ok),got=L.filter(x=>x.ok),tot=pend.reduce((s,x)=>s+(+x.pr||0),0);
+        const nm=k=>{for(const d of c.days){const f=effDay(c,d).items.find(i=>i._n===k);if(f)return f.n}return ""};
+        const card=x=>{const im=photos[`compra|${c.id}|${x.id}`]||imgSrc(ED.fotos[`compra|${c.id}|${x.id}`]),lg=(x.lg||[]).map(nm).filter(Boolean),pr=x.pr!==""&&x.pr!=null&&!isNaN(+x.pr);
+          return `<div class="cc${x.ok?" ok":""}"><div class="cpic">${im?`<img src="${esc(im)}" alt="" loading="lazy" onerror="this.remove()">`:ico("bag",30)}</div><div class="cinfo"><span class="cn">${esc(x.n)}</span>${pr?`<span class="cpr">${cur}${(+x.pr).toLocaleString("pt-BR")}</span><span class="cbr">≈ ${brl(+x.pr,cur)}</span>`:""}${lg.length?`<span class="clg">${esc(lg.slice(0,2).join(", "))}${lg.length>2?" +"+(lg.length-2):""}</span>`:""}</div></div>`};
+        h+=`<h2 class="pcity">${c.flag} ${esc(c.name)}</h2>`;
+        if(tot)h+=`<div class="ctot"><b>${cur}${tot.toLocaleString("pt-BR")}</b><span>≈ ${brl(tot,cur)}</span><small class="muted">falta comprar. estimativa, sem taxas do cartão.</small></div>`;
+        h+=L.length?`<div class="cgrid">${pend.map(card).join("")}</div>${got.length?`<div class="lbl" style="margin:18px 0 8px">comprados</div><div class="cgrid">${got.map(card).join("")}</div>`:""}`:`<p class="muted">nenhum item ainda.</p>`;
+        h+=`<div class="acts" style="margin-top:14px"><button class="btn sm" data-cc="${c.id}">${ico("plus",14)} adicionar ou editar</button></div>`})}
     if(kind==="lista"){
       h+=`<div class="acts" style="margin:0 0 6px"><button class="btn sm gtog" id="pfo" aria-pressed="${fotos}">${ico("eye",15)} ${fotos?"fotos visíveis":"mostrar fotos"}</button></div>`;
       let lastC=null;
@@ -1061,6 +1071,7 @@ function pageView(kind){
     return h};
   const draw=()=>{o.innerHTML=`<div class="ovm-bar"><button class="iconbtn" id="pbx" aria-label="fechar">${ico("x",20)}</button><div style="flex:1;min-width:0"><b>${T}</b><div class="muted" style="font-size:13px">${esc(CUR.nome||"")}</div></div></div><div class="ovp-body">${body()}</div>`;
     $("#pbx").onclick=()=>{o.hidden=true;o.innerHTML=""};
+    document.querySelectorAll("#ovm [data-cc]").forEach(b=>b.onclick=()=>{const c=CUR.cities.find(x=>x.id===b.dataset.cc);o.hidden=true;o.innerHTML="";compras(c,null,"all")});
     const pf=$("#pfo");if(pf)pf.onclick=()=>{fotos=!fotos;store.set("lista-fotos",fotos);const sc=$(".ovp-body").scrollTop;draw();$(".ovp-body").scrollTop=sc};
     if(kind==="spots")document.querySelectorAll("#ovm a.vref[data-tt]").forEach(a=>{const id=a.dataset.tt;if(!id)return;
       ttMeta(id,a.dataset.turl||"https://www.tiktok.com/@/video/"+id).then(m=>{if(!a.isConnected||!m)return;const sp=a.querySelector("span");
