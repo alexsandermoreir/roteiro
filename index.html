@@ -338,7 +338,7 @@ const cityFare=c=>c.days.reduce((s,d)=>s+dayFare(d),0);
 const ink=hex=>{const n=parseInt(hex.slice(1),16),r=n>>16&255,g=n>>8&255,b=n&255;return (r*299+g*587+b*114)/1000>150?"#14161A":"#FFFFFF"};
 function chip(k){const L=LINES[k];return `<span class="chip${L.bus?" bus":""}" style="--c:${L.c};--ct:${ink(L.c)}">${L.bus?"":`<span class="code">${k}</span>`}${esc(L.n)}</span>`}
 const LEGCTX=new WeakMap();
-function buildCtx(c){const hs=(hosp(c).estacao||"").trim()||null;c.days.forEach(day=>{let last=day.start?hs:null,prev=day.start?c.home.n:null;
+function buildCtx(c){const hs=(hosp(c).estacao||c.home.sta||"").trim()||null;c.days.forEach(day=>{let last=day.start?hs:null,prev=day.start?c.home.n:null;
   const st=l=>l&&l.m==="t"&&l.segs&&l.segs.length?l.segs[l.segs.length-1][1]:null;
   day.items.forEach(it=>{if(it.leg)LEGCTX.set(it.leg,{from:last,prev});
     if(it.n||it.home){prev=it.home?c.home.n:it.n;last=it.home?(st(it.leg)||hs):st(it.leg)}});
@@ -347,7 +347,8 @@ function legBody(l){
   if(l.m==="w")return `<div class="walk">${dur(l.min)} a pé, ${dist(l.km)}</div>`;
   if(l.m==="tour")return `<div class="walk">${esc(l.label||"De carro com a agência")}, ${dur(l.min)}</div>`;
   const cx=LEGCTX.get(l)||{};
-  const stp=(lab,name,note)=>`<div class="stp"><span class="sl">${lab}</span><span class="sn">${name?esc(name):`<span class="muted">estação mais próxima${cx.prev?" de "+esc(cx.prev):""}</span>`}</span></div>`;
+  const bus=l.segs.length&&LINES[l.segs[0][0]].bus;
+  const stp=(lab,name,note)=>`<div class="stp"><span class="sl">${lab}</span><span class="sn">${name?esc(name):`<span class="muted">${bus?"ponto de ônibus":"estação"} perto de ${esc(cx.prev||"aqui")}</span>`}</span></div>`;
   let segs="";
   if(!l.segs.length)segs=`<span class="walk">Transporte, linhas a definir</span>`;
   else{segs=`<div class="steps">`;

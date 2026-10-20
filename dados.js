@@ -31,10 +31,10 @@ const TRIP={cities:[
    {n:"Panoramic Restaurant",w:"",p:[41.0055,28.9790],leg:w(7,.55),note:"Opção de jantar. Reservar."}]}
  ]},
  {id:"toquio",name:"Tóquio",flag:"🇯🇵",kanji:"東京",dates:"02/11 a 09/11",area:"Tokyo",wl:"ja",lang:"日本語",card:"Suica",
-  home:{n:"Airbnb",p:[35.6580,139.7016],q:"Shibuya Station, Tokyo"},cover:"https://images.squarespace-cdn.com/content/v1/5e019397a7a9f4232e428e43/1713238785801-KJSU32EBLWSNEVJZRYHW/IMG_2551.JPG",days:[
+  home:{n:"Airbnb",p:[35.6580,139.7016],q:"Shibuya Station, Tokyo",sta:"Shibuya"},cover:"https://images.squarespace-cdn.com/content/v1/5e019397a7a9f4232e428e43/1713238785801-KJSU32EBLWSNEVJZRYHW/IMG_2551.JPG",days:[
   {d:"2026-11-02",label:"Chegada",items:[
    {n:"Aeroporto de Haneda",ja:"羽田空港 第3ターミナル",p:[35.5494,139.7798],time:"19h45",note:"Preencher o Visit Japan Web antes acelera a imigração."},
-   {n:"Estação de Shibuya",ja:"渋谷駅",p:[35.6580,139.7016],leg:t(35,25,540,[["KK","Shinagawa"],["JY","Shibuya"]])},
+   {n:"Estação de Shibuya",ja:"渋谷駅",p:[35.6580,139.7016],leg:t(35,25,540,[["KK","Shinagawa","Haneda Airport"],["JY","Shibuya"]])},
    {home:1,time:"22h",note:"Check-in sozinho por volta das 22h. Confirmar com o anfitrião.",leg:w(8,.67)},
    {txt:"Sair para comer em Shibuya"}]},
   {d:"2026-11-03",label:"Feriado",start:1,depart:"Saída às 7h45",items:[
@@ -76,7 +76,7 @@ const TRIP={cities:[
    {n:"Golden Gai",ja:"新宿ゴールデン街",p:[35.6941,139.7048],leg:w(6,.46),note:"Bares minúsculos, vários cobram entrada. Com 6 pessoas, talvez dividir o grupo."},
    {n:"Cross Shinjuku Vision",ja:"クロス新宿ビジョン",p:[35.6917,139.7022],leg:w(6,.52),note:"O gato aparece a cada 15 minutos: :00, :15, :30 e :45."},
    {n:"Omoide Yokocho",ja:"思い出横丁",p:[35.6930,139.6996],leg:w(2,.18),info:"24 horas"}],
-   end:t(20,4.6,200,[["JY","Shibuya"]])},
+   end:t(20,4.6,200,[["JY","Shibuya","Shinjuku"]])},
   {d:"2026-11-07",label:"Tokyo Tower e Odaiba",start:1,items:[
    {n:"7-Eleven",ja:"セブン-イレブン",p:[35.6560,139.7495],leg:t(33,5.3,290,[["Z","Aoyama-itchōme"],["E","Akabanebashi"]]),note:"Photo spot.",q:"7-Eleven Shiba Koen Tokyo Tower"},
    {n:"Kaledo Tower",p:[35.6578,139.7480],leg:w(8,.62),note:"Photo spot."},
@@ -84,10 +84,10 @@ const TRIP={cities:[
    {n:"Templo Zojoji",ja:"増上寺",p:[35.6575,139.7483],leg:w(6,.5),info:"9h às 17h"},
    {n:"teamLab Borderless",ja:"チームラボボーダレス 麻布台ヒルズ",p:[35.6605,139.7405],leg:w(12,.97),info:"8h30 às 21h",note:"Reservar com antecedência."},
    {n:"Azabudai Hills",ja:"麻布台ヒルズ",p:[35.6606,139.7395],leg:w(6,.47),note:"Opção para quem não for ao teamLab. Almoço às 12h30."},
-   {n:"Rainbow Bridge",ja:"レインボーブリッジ 芝浦口",p:[35.6415,139.7560],leg:t(41,6.5,470,[["B88","Shimbashi"],["U","Shibaura-futō"]]),time:"16h",note:"Atravessar às 16h para o pôr do sol, às 16h42. A travessia leva uns 30 minutos e a entrada fica a 5 minutos da estação.",info:"Passarela 10h às 18h, última entrada 17h30"},
+   {n:"Rainbow Bridge",ja:"レインボーブリッジ 芝浦口",p:[35.6415,139.7560],leg:t(41,6.5,470,[["B88","Shimbashi","Azabudai Hills"],["U","Shibaura-futō"]]),time:"16h",note:"Atravessar às 16h para o pôr do sol, às 16h42. A travessia leva uns 30 minutos e a entrada fica a 5 minutos da estação.",info:"Passarela 10h às 18h, última entrada 17h30"},
    {n:"Odaiba Marine Park",ja:"お台場海浜公園",p:[35.6297,139.7752],leg:w(30,2.5),note:"Tokyo Aqua Symphony: shows de 10 minutos às 15h, 15h45, 16h30, 17h15, 18h, 18h45, 19h30, 20h15, 21h e 21h30. Programação de novembro a confirmar.",links:[["Programação","https://tokyoaquasymphony.jp/en/schedule/"]]},
    {n:"Estátua da Liberdade",ja:"自由の女神像",p:[35.6278,139.7717],leg:w(6,.49)},
-   {alt:"Plano B, sem o A-PIT: voltar direto para casa pela Tokyo Teleport",leg:t(0,0,540,[["R","Shibuya"]])},
+   {alt:"Plano B, sem o A-PIT: voltar direto para casa pela Tokyo Teleport",leg:t(0,0,540,[["R","Shibuya","Tokyo Teleport"]])},
    {n:"A-PIT Autobacs",ja:"A PIT オートバックス東雲",p:[35.6440,139.8040],leg:t(25,4,210,[["B01","Fukagawa-Shako-Iriguchi"]])},
    {n:"Daikoku Parking Area",ja:"大黒パーキングエリア",p:[35.4620,139.6830],leg:tour(96,28),note:"Passeio com agência."},
    {n:"Shibuya Crossing",ja:"渋谷スクランブル交差点",p:[35.6595,139.7005],leg:tour(75,29),note:"Parada final da experiência Tokyo Drift."}],
@@ -98,10 +98,10 @@ const TRIP={cities:[
    {n:"Rio Sumida",ja:"隅田川",p:[35.7105,139.7990],leg:w(6,.49)},
    {n:"Tokyo Skytree",ja:"東京スカイツリー",p:[35.7101,139.8107],leg:w(19,1.5),info:"9h às 22h",note:"Reservar com antecedência."},
    {n:"The Matcha Tokyo",ja:"THE MATCHA TOKYO 東京ソラマチ",p:[35.7100,139.8115],leg:w(3,.26),note:"Photo spot na entrada East Yard: escada rolante com a Skytree ao fundo."},
-   {n:"Ueno Park",ja:"上野恩賜公園",p:[35.7156,139.7745],leg:t(19,4.3,250,[["SK","Ueno"]]),info:"5h às 23h"},
+   {n:"Ueno Park",ja:"上野恩賜公園",p:[35.7156,139.7745],leg:t(19,4.3,250,[["SK","Ueno","Tokyo Skytree"]]),info:"5h às 23h"},
    {n:"Ameyoko",ja:"アメ横",p:[35.7100,139.7745],leg:w(7,.6)},
    {n:"Akihabara",ja:"秋葉原電気街",p:[35.6984,139.7731],leg:w(15,1.3)}],
-   end:t(38,12,210,[["G","Shibuya"]])},
+   end:t(38,12,210,[["G","Shibuya","Suehirochō"]])},
   {d:"2026-11-09",label:"Ida para Kawaguchiko",start:1,depart:"Check-out. Enviar as malas para Kyoto.",items:[
    {n:"Tsukiji Outer Market",ja:"築地場外市場",p:[35.6655,139.7707],leg:t(37,10,null,[])},
    {n:"Hamarikyu",ja:"浜離宮恩賜庭園",p:[35.6600,139.7633],leg:w(17,1.4),info:"9h às 17h"},
@@ -112,7 +112,7 @@ const TRIP={cities:[
    {n:"Palácio Imperial",ja:"皇居",p:[35.6852,139.7528],leg:w(29,2.4),note:"Reservar a visita guiada com antecedência."},
    {n:"Marunouchi",ja:"丸の内",p:[35.6810,139.7660],leg:w(23,1.9)},
    {n:"Estação de Tóquio",ja:"東京駅",p:[35.6812,139.7671],leg:w(3,.26)},
-   {home:1,note:"Pegar as mochilas.",leg:t(35,14,260,[["JY","Shibuya"]])},
+   {home:1,note:"Pegar as mochilas.",leg:t(35,14,260,[["JY","Shibuya","Tokyo"]])},
    {n:"Busta Shinjuku",ja:"バスタ新宿",p:[35.6884,139.7002],leg:t(13,4,200,[["JY","Shinjuku"]]),note:"Ônibus expresso para Kawaguchiko, seguir a placa Expressway Bus. Cerca de 2h, saídas das 6h55 às 22h25. Comprar a passagem antes.",fee:"¥2.200 (fora do Suica)",links:[["Passagem","https://highway-buses.jp/course/kawaguchiko.php"]]}]}
  ]},
  {id:"kawaguchiko",name:"Kawaguchiko",flag:"🇯🇵",kanji:"河口湖",dates:"09/11 a 10/11",area:"Fujikawaguchiko",wl:"ja",lang:"日本語",card:"Suica",
