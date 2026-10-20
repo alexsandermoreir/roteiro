@@ -1,6 +1,6 @@
 {
- "name": "Roteiros Japão 2026",
- "short_name": "Roteiros",
+ "name": "roteiro",
+ "short_name": "roteiro",
  "start_url": "./",
  "scope": "./",
  "display": "standalone",

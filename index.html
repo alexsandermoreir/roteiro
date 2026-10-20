@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#101216" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="robots" content="noindex">
-<title>Roteiros Japão 2026</title>
+<title>roteiro</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icone-180.png">
 <link rel="icon" href="icone-192.png">
@@ -83,7 +83,7 @@ a{color:inherit}
 
 /* Próxima parada */
 .focus{background:var(--surface);border-radius:var(--r);padding:18px;border:1px solid var(--hair);margin-bottom:22px}
-.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.eyebrow{font-size:13px;font-weight:600;color:var(--muted)}
 .focus h3{margin:6px 0 0;font-size:26px;line-height:1.15;letter-spacing:-.02em;text-wrap:balance}
 .focus .jn{font-size:15px;color:var(--muted);margin-top:2px}
 .focus .how{margin-top:14px;padding-top:14px;border-top:1px solid var(--hair)}
@@ -193,7 +193,7 @@ details.map[open] summary::after{content:"−"}
 .btn.edit{border-style:dashed}
 .jaov.sheetmode{place-items:start center;overflow-y:auto;text-align:left}
 .sheet .set{border-top:1px solid var(--hair);padding:14px 0}
-.sheet .lbl{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.sheet .lbl{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:10px}
 .hint.left{text-align:left;margin:0 0 10px;display:block}
 .seg{display:flex;border:1px solid var(--hair);border-radius:12px;overflow:hidden}
 .seg button{flex:1;height:42px;font-size:14px;font-weight:600}
@@ -231,6 +231,27 @@ details.map[open] summary::after{content:"−"}
 .pres .hint{grid-column:1/-1}
 .pick{aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--soft)}
 .pick img{width:100%;height:100%;object-fit:cover;display:block}
+.who{font-weight:600;margin-bottom:4px;overflow-wrap:anywhere}
+h1,h2,h3,.eyebrow,.lbl,.btn,.bar-title,.city .name,.city .dates,.city .stat,.dchip span,.seg button,.flag,.stats span,.stats b,.stop .n,.stop .t,
+.cover-edit,.plat,.vt,.chip,.walk,.toast,.or,.hint,.dayhead .sub,details.map summary,.legmeta,.to,.empty,.gx,.maplink,.pact a,.credit,.tog span,.pmsg,.label{text-transform:lowercase}
+.code,.ja{text-transform:none}
+.mark{font-size:40px;font-weight:700;letter-spacing:-.045em;line-height:1}
+.mark::after{content:".";color:var(--accent)}
+.top .back{margin-right:10px}
+.top h1{flex:1;min-width:0}
+.trips{display:grid;gap:12px;margin-top:22px}
+.trip{position:relative;border-radius:var(--r);overflow:hidden;aspect-ratio:4/3;max-width:100%;background:var(--accent);color:var(--accent-ink);padding:20px;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-end}
+.trip.has{background:#000;color:#fff}
+.trip.has::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.3),rgba(0,0,0,0) 40%,rgba(0,0,0,.6))}
+.trip>*:not(.cimg){position:relative;z-index:1}
+.tname{font-size:34px;font-weight:700;letter-spacing:-.035em;line-height:1.05}
+.tmeta{font-size:15px;opacity:.85;margin-top:4px;text-transform:lowercase}
+.tbtns{position:absolute!important;top:12px;right:12px;display:flex;gap:6px}
+.tbtns .cover-edit{position:static!important}
+.newtrip{height:64px;border-radius:var(--r);border:1.5px dashed var(--hair);color:var(--muted);font-weight:600;font-size:16px;display:flex;align-items:center;justify-content:center;gap:10px}
+.newtrip span{font-size:22px;line-height:1}
+.emptytrip{padding:28px 4px;text-align:center}
+.emptytrip p{margin:0 0 6px}
 .alldone{text-align:center;padding:8px 0}
 @media (prefers-reduced-motion:no-preference){.day{animation:in .18s ease-out}@keyframes in{from{opacity:.4;transform:translateY(4px)}}}
 </style>
@@ -303,66 +324,84 @@ function wiki(it){const term=wikiFor(it);if(!term)return Promise.resolve(null);i
   return pend[term]}
 const wikiOf=it=>{const t=wikiFor(it);return t&&WK[t]?WK[t]:null};
 const waiting=it=>{const t=wikiFor(it);return !!t&&!(t in WK)};
-const photoOf=(k,it)=>photos[k]||ED.fotos[k]||it.img||(wikiOf(it)||{}).src||null;
+const photoOf=(k,it)=>photos[k]||imgSrc(ED.fotos[k])||it.img||(wikiOf(it)||{}).src||null;
 const vidsOf=(k,it)=>[...(it.vids||[]).filter(v=>!(ED.ocultos[k]||[]).includes(v[1])),...(ED.videos[k]||[])];
 const tileTxt=it=>esc(((it.home?"家":(it.ja||it.n)).replace(/^(Apple|THE|A PIT|MEGA|SHIBUYA|GINZA|Nintendo|ユニクロ)\s*/,"")).slice(0,2));
-const coverOf=c=>photos["capa-"+c.id]||ED.capas[c.id]||c.cover||null;
-function shrink(blob){return new Promise(res=>{const u=URL.createObjectURL(blob),im=new Image();
-  im.onload=()=>{const m=1400,r=Math.min(1,m/Math.max(im.width,im.height)),cv=document.createElement("canvas");cv.width=Math.round(im.width*r);cv.height=Math.round(im.height*r);
-    cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(u);cv.toBlob(b=>res(b||blob),"image/jpeg",.84)};
+const coverOf=c=>photos["capa-"+c.id]||imgSrc(ED.capas[c.id])||c.cover||null;
+function shrink(blob,m=1400,q=.84){return new Promise(res=>{const u=URL.createObjectURL(blob),im=new Image();
+  im.onload=()=>{r=Math.min(1,m/Math.max(im.width,im.height)),cv=document.createElement("canvas");cv.width=Math.round(im.width*r);cv.height=Math.round(im.height*r);
+    cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(u);cv.toBlob(b=>res(b||blob),"image/jpeg",q)};
   im.onerror=()=>{URL.revokeObjectURL(u);res(null)};im.src=u})}
 /* edições compartilhadas: edicoes.json no GitHub; sem token, ficam neste aparelho */
-const REPO="alexsandermoreir/roteiro";
-const tok=()=>{try{return localStorage.getItem("gh-token")||""}catch(e){return ""}};
 let ED={capas:{},fotos:{},videos:{},ocultos:{},guia:{}},ED_TEXT="",DATA_TEXT="";
-const norm=e=>({capas:e.capas||{},fotos:e.fotos||{},videos:e.videos||{},ocultos:e.ocultos||{},guia:e.guia||{}});
+/* Firebase: edições do grupo em tempo real */
+const FB_CFG={apiKey:"AIzaSyBOHt2ySoWXgAqo8ZqNIxGHUbWnfeacnrc",authDomain:"roteiro-c271b.firebaseapp.com",projectId:"roteiro-c271b",
+  storageBucket:"roteiro-c271b.firebasestorage.app",messagingSenderId:"979387042161",appId:"1:979387042161:web:2851d1c5da95b3fd9bced0"};
+let FB=null,USER=null,ROLE={editor:false,admin:false,emails:[]},JSON_ED=null,FS_ED=null;const FOTOS={};
+const canShare=()=>!!(FB&&USER&&ROLE.editor);
+const imgSrc=u=>!u?null:u.startsWith("fb:")?(FOTOS[u.slice(3)]||null):u;
+const norm=e=>({capas:e.capas||{},fotos:e.fotos||{},videos:e.videos||{},ocultos:e.ocultos||{},guia:e.guia||{},viagens:e.viagens||{}});
 const localOps=()=>store.get("ed-ops")||[];
 function applyOp(e,o){
   if(o.t==="capa"){if(o.url)e.capas[o.c]=o.url;else delete e.capas[o.c]}
   if(o.t==="foto"){if(o.url)e.fotos[o.k]=o.url;else delete e.fotos[o.k]}
   if(o.t==="vid+"){e.videos[o.k]=(e.videos[o.k]||[]).filter(x=>x[1]!==o.v[1]).concat([o.v]);e.ocultos[o.k]=(e.ocultos[o.k]||[]).filter(x=>x!==o.v[1])}
   if(o.t==="vid-"){const l=e.videos[o.k]||[];if(l.some(x=>x[1]===o.id))e.videos[o.k]=l.filter(x=>x[1]!==o.id);else e.ocultos[o.k]=[...(e.ocultos[o.k]||[]),o.id]}
+  if(o.t==="trip"){if(o.v)e.viagens[o.id]={...(e.viagens[o.id]||{}),...o.v};else e.viagens[o.id]={del:1}}
   if(o.t==="g+"){const g=e.guia[o.k]=e.guia[o.k]||{};g[o.kind]=(g[o.kind]||[]).concat([o.v])}
   if(o.t==="g-"){const g=e.guia[o.k]||{},l=g[o.kind]||[];if(l.some(x=>x.id===o.id))g[o.kind]=l.filter(x=>x.id!==o.id);else e.ocultos[o.k]=[...(e.ocultos[o.k]||[]),o.id]}
   return e}
+const clone=o=>JSON.parse(JSON.stringify(o));
+function recompute(){const a=norm(JSON_ED||{}),b=norm(FS_ED||{}),e=norm({});
+  for(const k of ["capas","fotos","videos","ocultos","guia","viagens"])e[k]=clone({...a[k],...b[k]});
+  localOps().forEach(o=>applyOp(e,o));ED=e}
 async function loadEd(){
   try{const r=await fetch("edicoes.json?v="+Date.now());ED_TEXT=r.ok?await r.text():"{}"}catch(e){ED_TEXT=ED_TEXT||"{}"}
-  let e;try{e=norm(JSON.parse(ED_TEXT))}catch(x){e=norm({})}
-  localOps().forEach(o=>applyOp(e,o));ED=e}
-const b64=str=>btoa(unescape(encodeURIComponent(str)));
-const unb64=b=>decodeURIComponent(escape(atob(b.replace(/\n/g,""))));
-const gh=(path,method,body)=>fetch(`https://api.github.com/repos/${REPO}/contents/${path}`,{method:method||"GET",cache:"no-store",
-  headers:{Authorization:"Bearer "+tok(),Accept:"application/vnd.github+json"},body:body?JSON.stringify(body):undefined});
-async function pushOps(ops){
-  for(let i=0;i<2;i++){
-    const r=await gh("edicoes.json");let remote={},sha;
-    if(r.ok){const j=await r.json();sha=j.sha;try{remote=JSON.parse(unb64(j.content))}catch(e){}}else if(r.status!==404)throw new Error(r.status);
-    remote=norm(remote);ops.forEach(o=>applyOp(remote,o));
-    const p=await gh("edicoes.json","PUT",{message:"Edição do roteiro pelo app",content:b64(JSON.stringify(remote,null,1)),sha});
-    if(p.ok)return;if(p.status!==409&&p.status!==422)throw new Error(p.status)}
-  throw new Error("conflito")}
+  try{JSON_ED=JSON.parse(ED_TEXT)}catch(x){JSON_ED={}}recompute()}
+const parseFs=s=>{try{return s.exists?JSON.parse(s.data().json||"{}"):{}}catch(e){return {}}};
+async function pushFb(ops){const ref=FB.db.doc("roteiro/edicoes");
+  await FB.db.runTransaction(async tx=>{const e=norm(parseFs(await tx.get(ref)));ops.forEach(o=>applyOp(e,o));
+    tx.set(ref,{json:JSON.stringify(e),por:USER.email,em:firebase.firestore.FieldValue.serverTimestamp()})})}
 async function saveOps(ops){
   ops.forEach(o=>applyOp(ED,o));
-  if(!tok()){store.set("ed-ops",[...localOps(),...ops]);toast("Salvo neste aparelho. Para o grupo ver, ative o GitHub nos ajustes.");return}
-  try{await pushOps(ops);toast("Salvo para o grupo. Aparece para todos em cerca de 1 minuto.")}
-  catch(e){store.set("ed-ops",[...localOps(),...ops]);toast("Não consegui salvar no GitHub. Ficou guardado neste aparelho.")}}
-async function flushLocal(){const ops=localOps();if(!ops.length||!tok())return;try{await pushOps(ops);store.set("ed-ops",[]);toast("Edições deste aparelho enviadas para o grupo.")}catch(e){}}
-async function uploadImg(blob,k){
-  const data=await new Promise(r=>{const f=new FileReader();f.onload=()=>r(String(f.result).split(",")[1]);f.readAsDataURL(blob)});
-  const name="fotos/"+k.normalize("NFD").replace(/[^\w]+/g,"-").replace(/^-|-$/g,"").toLowerCase().slice(0,60)+"-"+Date.now().toString(36)+".jpg";
-  const p=await gh(name,"PUT",{message:"Foto do roteiro",content:data});if(!p.ok)throw new Error(p.status);return name}
+  if(!canShare()){store.set("ed-ops",[...localOps(),...ops]);
+    toast(!USER?"Salvo neste aparelho. Entre na sua conta, na engrenagem, para o grupo ver.":!USER.emailVerified?"Salvo neste aparelho. Confirme seu e-mail para o grupo ver.":"Salvo neste aparelho. Sua conta ainda não foi liberada para editar.");return}
+  try{await pushFb(ops);toast("Salvo para o grupo.")}
+  catch(e){store.set("ed-ops",[...localOps(),...ops]);toast("Não consegui salvar agora. Ficou guardado e vai ser enviado depois.")}}
+async function flushLocal(){const ops=localOps();if(!ops.length||!canShare())return;
+  try{await pushFb(ops);store.set("ed-ops",[]);recompute();toast("Edições deste aparelho enviadas para o grupo.")}catch(e){}}
+const toData=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(String(f.result));f.readAsDataURL(b)});
+async function uploadFb(blob){let data=await toData(await shrink(blob,1000,.78));
+  if(data.length>380000)data=await toData(await shrink(blob,720,.7));
+  const ref=await FB.db.collection("fotos").add({data,por:USER.email,em:firebase.firestore.FieldValue.serverTimestamp()});FOTOS[ref.id]=data;return "fb:"+ref.id}
+function loadScript(src){return new Promise((res,rej)=>{const sc=document.createElement("script");sc.src=src;sc.onload=res;sc.onerror=rej;document.head.appendChild(sc)})}
+async function loadRole(){ROLE={editor:false,admin:false,emails:[]};if(!USER)return;
+  try{const s=await FB.db.doc("config/editores").get({source:"server"}).catch(()=>FB.db.doc("config/editores").get());
+    const d=s.exists?s.data():null,em=(USER.email||"").toLowerCase();
+    ROLE.emails=(d&&d.emails)||[];ROLE.admin=!d||d.admin===em;ROLE.editor=USER.emailVerified&&(ROLE.admin||ROLE.emails.includes(em))}catch(e){}}
+async function initFirebase(){
+  const B="https://www.gstatic.com/firebasejs/10.12.2/";
+  try{await loadScript(B+"firebase-app-compat.js");await Promise.all([loadScript(B+"firebase-auth-compat.js"),loadScript(B+"firebase-firestore-compat.js")])}catch(e){return}
+  firebase.initializeApp(FB_CFG);const db=firebase.firestore();
+  try{await db.enablePersistence({synchronizeTabs:true})}catch(e){}
+  FB={db,auth:firebase.auth()};
+  let t;const later=()=>{clearTimeout(t);t=setTimeout(()=>{if($("#jaov").hidden)rerender()},200)};
+  db.doc("roteiro/edicoes").onSnapshot(s=>{FS_ED=parseFs(s);recompute();later()},()=>{});
+  db.collection("fotos").onSnapshot(q=>{q.docChanges().forEach(ch=>{if(ch.type==="removed")delete FOTOS[ch.doc.id];else FOTOS[ch.doc.id]=ch.doc.data().data});later()},()=>{});
+  FB.auth.onAuthStateChanged(async u=>{USER=u;await loadRole();flushLocal()});
+}
 const opFor=(k,url)=>k.startsWith("capa-")?{t:"capa",c:k.slice(5),url}:{t:"foto",k,url};
 
 function sheet(html,onClose){const o=$("#jaov");o.className="jaov sheetmode";o.innerHTML=`<div class="sheet" role="document">${html}</div>`;o.hidden=false;
   const close=()=>{o.hidden=true;o.className="jaov";onClose&&onClose()};o.onclick=e=>{if(e.target===o)close()};o.scrollTop=0;return close}
 let toastT;function toast(t,act){const el=$("#toast");el.innerHTML=`<span>${esc(t)}</span>${act?`<button id="tact">${esc(act[0])}</button>`:""}`;el.hidden=false;
   if(act)$("#tact").onclick=()=>{el.hidden=true;act[1]()};clearTimeout(toastT);toastT=setTimeout(()=>el.hidden=true,act?9000:4500)}
-const rerender=()=>view.city?city():home();
+const rerender=()=>view.city?city():CUR?home():trips();
 function reloadApp(){const h=location.hash;location.replace(location.pathname+"?v="+Date.now()+h)}
 
 function editPhoto(k,name,after,query){
   query=query||name;
-  let cur=photos[k]||(k.startsWith("capa-")?ED.capas[k.slice(5)]:ED.fotos[k]);
+  let cur=photos[k]||imgSrc(k.startsWith("capa-")?ED.capas[k.slice(5)]:ED.fotos[k]);
   const close=sheet(`<div class="eyebrow">${k.startsWith("capa-")?"Capa":"Foto"}</div><h3>${esc(name)}</h3>
     ${cur?`<img class="ph" src="${esc(cur)}" alt="">`:""}
     <div class="linkrow"><input id="psearch" class="field" type="search" value="${esc(query)}" autocomplete="off" aria-label="Pesquisar fotos"><button class="btn" id="pgo">Buscar</button></div>
@@ -373,12 +412,12 @@ function editPhoto(k,name,after,query){
     <div class="linkrow" style="margin-top:8px"><input id="purl" class="field" type="text" inputmode="url" placeholder="Ou cole o link da imagem" autocomplete="off" autocapitalize="off"><button class="btn" id="pok">Usar</button></div>
     <div class="pmsg" id="pmsg" aria-live="polite"></div>
     <div class="acts">${cur?`<button class="btn" id="pdel">Remover</button>`:""}<button class="btn" id="pclose" style="margin-left:auto">Fechar</button></div>
-    <div class="hint">${tok()?"Fica visível para todo o grupo.":"Fica salva só neste aparelho. Ative o GitHub nos ajustes para o grupo ver."}</div>`,()=>{document.removeEventListener("paste",onPaste);after()});
+    <div class="hint">${canShare()?"Fica visível para todo o grupo.":"Fica salva só neste aparelho. Entre na sua conta, na engrenagem, para o grupo ver."}</div>`,()=>{document.removeEventListener("paste",onPaste);after()});
   const msg=t=>$("#pmsg").textContent=t;
   const dropLocal=()=>{DB.del(k);if(photos[k]&&photos[k].startsWith("blob:"))URL.revokeObjectURL(photos[k]);delete photos[k]};
   const setBlob=async b=>{msg("Preparando a imagem…");const sb=await shrink(b);if(!sb)return msg("Esse arquivo não é uma imagem que eu consiga abrir.");
     dropLocal();DB.put(k,{blob:sb});photos[k]=URL.createObjectURL(sb);
-    if(tok()){msg("Enviando para o grupo…");try{const path=await uploadImg(sb,k);await saveOps([opFor(k,path)])}catch(e){toast("Não consegui enviar a foto. Ficou salva neste aparelho.")}}
+    if(canShare()){msg("Enviando para o grupo…");try{const ref=await uploadFb(sb);await saveOps([opFor(k,ref)]);dropLocal()}catch(e){toast("Não consegui enviar a foto. Ficou salva neste aparelho.")}}
     close()};
   const setLink=u=>{u=u.trim();if(!/^https?:\/\//.test(u))return msg("Cole um link que comece com http.");msg("Abrindo o link…");
     const im=new Image();im.onload=async()=>{dropLocal();await saveOps([opFor(k,u)]);close()};
@@ -431,7 +470,7 @@ function guide(c,it,k,name,startTab){
   const ed=()=>view.edit;
   const rm=(kind,id)=>ed()?`<button class="gx" data-gdel="${kind}:${id}" aria-label="Remover">Remover</button>`:"";
   const empty=()=>`<p class="empty">Nada aqui ainda.${ed()?"":" Toque no lápis para adicionar."}</p>`;
-  const img=x=>x.img?`<img class="ph" src="${esc(x.img)}" alt="" loading="lazy">`:"";
+  const img=x=>imgSrc(x.img)?`<img class="ph" src="${esc(imgSrc(x.img))}" alt="" loading="lazy">`:"";
   function body(){
     const L=g[tab];let h="";
     if(tab==="videos"){
@@ -446,7 +485,7 @@ function guide(c,it,k,name,startTab){
       h=L.length?L.map(x=>`<div class="gcard">${img(x)}<p>${esc(x.t)}</p>${x.p?`<a class="maplink" href="${mapsAt(x.p)}" target="_blank" rel="noopener">Abrir no mapa ↗</a>`:""}${rm(tab,x.id)}</div>`).join(""):empty();
       if(ed())h+=`<div class="gform"><textarea id="gtxt" class="field area" rows="3" placeholder="${tab==="spots"?"Onde fica o melhor ângulo":tab==="poses"?"Descreva a pose":"Escreva a nota"}"></textarea>
         ${tab!=="notas"?`<input id="gimg" class="field" type="url" inputmode="url" placeholder="Link de uma imagem de referência (opcional)" autocomplete="off">
-        ${tok()?`<label class="btn sm" for="gfile">Ou escolher imagem da galeria</label><input id="gfile" type="file" accept="image/*" hidden>`:""}`:""}
+        ${canShare()?`<label class="btn sm" for="gfile">Ou escolher imagem da galeria</label><input id="gfile" type="file" accept="image/*" hidden>`:""}`:""}
         ${tab==="spots"?`<input id="gpos" class="field" type="text" placeholder="Coordenadas ou link do Google Maps (opcional)" autocomplete="off">`:""}
         <button class="btn go" id="gadd">Adicionar</button></div>`;
     }
@@ -474,26 +513,38 @@ function guide(c,it,k,name,startTab){
       const t=$("#gtxt").value.trim();if(!t)return msg("Escreva um texto curto.");
       const v={id:"e"+Date.now().toString(36),t};
       const il=$("#gimg")&&$("#gimg").value.trim();if(il){if(!/^https?:\/\//.test(il))return msg("O link da imagem precisa começar com http.");v.img=il}
-      if(fileBlob&&tok()){msg("Enviando a imagem…");try{const sb=await shrink(fileBlob);v.img=await uploadImg(sb,k+"-"+tab)}catch(e){return msg("Não consegui enviar a imagem.")}}
+      if(fileBlob&&canShare()){msg("Enviando a imagem…");try{v.img=await uploadFb(fileBlob)}catch(e){return msg("Não consegui enviar a imagem.")}}
       const pos=$("#gpos")&&parseCoords($("#gpos").value);if(pos)v.p=pos;
       await saveOps([{t:"g+",k,kind:tab,v}]);fileBlob=null;redraw()};
   }
   bind();
 }
 
+function acct(){
+  if(!FB)return `<div class="hint left">Não consegui conectar ao Firebase. Confira a internet e toque em Atualizar agora.</div>`;
+  if(!USER)return `<div class="hint left">Entre para que capas, fotos, vídeos e dicas apareçam para todo o grupo.</div>
+    <div class="gform" style="border:0;padding:0;margin:0"><input id="aem" class="field" type="email" placeholder="E-mail" autocomplete="username" autocapitalize="off">
+    <input id="apw" class="field" type="password" placeholder="Senha" autocomplete="current-password">
+    <div class="acts" style="margin-top:4px"><button class="btn go" id="ain" style="flex:1">Entrar</button><button class="btn" id="anew">Criar conta</button></div>
+    <button class="gx" id="aforgot">Esqueci a senha</button></div>`;
+  const st=!USER.emailVerified?`Confirme seu e-mail pelo link que enviamos. Depois toque em Já confirmei.`
+    :ROLE.editor?`Suas edições aparecem para todo o grupo.`:`Sua conta ainda não foi liberada para editar. Peça para o administrador incluir seu e-mail.`;
+  return `<div class="who">${esc(USER.email)}</div><div class="hint left">${st}</div>
+    ${!USER.emailVerified?`<div class="acts" style="margin-top:0"><button class="btn sm" id="acheck">Já confirmei</button><button class="btn sm" id="aresend">Reenviar link</button></div>`:""}
+    ${ROLE.admin&&USER.emailVerified?`<div class="lbl" style="margin-top:14px">Quem pode editar</div>
+      <textarea id="aemails" class="field area" rows="4" placeholder="Um e-mail por linha">${esc(ROLE.emails.join("\n"))}</textarea>
+      <button class="btn sm" id="alist" style="margin-top:8px">Salvar lista</button>`:""}
+    <button class="gx" id="aout" style="margin-top:12px">Sair da conta</button>`}
 function settings(){
   const theme=store.get("tema")||"auto",c=view.city;
-  const close=sheet(`<div class="eyebrow">Ajustes</div><h3>Roteiros</h3>
+  const close=sheet(`<div class="eyebrow">ajustes</div><h3>roteiro</h3>
     <div class="set"><div class="lbl">Aparência</div><div class="seg">${[["auto","Automático"],["light","Claro"],["dark","Escuro"]].map(([v,l])=>`<button data-th="${v}" aria-pressed="${theme===v}">${l}</button>`).join("")}</div></div>
     <div class="set"><div class="lbl">Roteiro</div><button class="btn wide" id="sref">Atualizar agora</button>
       <div class="hint left">Busca a versão mais recente sem sair do app.</div></div>
     <div class="set"><div class="lbl">Edição</div>
       <label class="tog"><span>Mostrar botões de edição</span><input type="checkbox" id="sedit"${view.edit?" checked":""}></label></div>
-    <div class="set"><div class="lbl">Compartilhar edições com o grupo</div>
-      <div class="hint left">${tok()?"Ativo. Capas, fotos e vídeos que você adicionar aparecem para todos.":"Cole um token do GitHub com permissão de escrita só no repositório roteiro. Ele fica guardado apenas neste aparelho."}</div>
-      <div class="linkrow"><input id="stok" class="field" type="password" placeholder="${tok()?"Token salvo":"github_pat_…"}" autocomplete="off"><button class="btn" id="stoksave">${tok()?"Trocar":"Salvar"}</button></div>
-      ${tok()?`<button class="btn sm" id="stokdel" style="margin-top:8px">Remover token</button>`:`<a class="hint left" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Criar token no GitHub ↗</a>`}
-      ${localOps().length?`<div class="hint left">${localOps().length} edição(ões) guardada(s) só neste aparelho.</div>`:""}</div>
+    <div class="set"><div class="lbl">Conta do grupo</div>${acct()}
+      ${localOps().length?`<div class="hint left" style="margin-top:10px">${localOps().length} edição(ões) guardada(s) só neste aparelho.</div>`:""}</div>
     ${c?`<div class="set"><div class="lbl">Endereço da hospedagem em ${esc(c.name)}</div>
       <div class="linkrow"><input id="saddr" class="field" placeholder="Cole o endereço" autocomplete="off" value="${esc(addr())}"><button class="btn" id="saddrok">Salvar</button></div></div>`:""}
     <div class="set"><div class="lbl">Limpar</div><div class="acts" style="flex-wrap:wrap;margin-top:0">
@@ -502,12 +553,22 @@ function settings(){
   document.querySelectorAll("[data-th]").forEach(b=>b.onclick=()=>{store.set("tema",b.dataset.th);applyTheme();document.querySelectorAll("[data-th]").forEach(x=>x.setAttribute("aria-pressed",x===b))});
   $("#sref").onclick=reloadApp;
   $("#sedit").onchange=e=>{view.edit=e.target.checked;store.set("edit",view.edit)};
-  $("#stoksave").onclick=async()=>{const v=$("#stok").value.trim();if(!v)return;
-    const r=await fetch(`https://api.github.com/repos/${REPO}`,{headers:{Authorization:"Bearer "+v}}).catch(()=>null);
-    if(!r||!r.ok){toast("Esse token não abriu o repositório. Confira a permissão.");return}
-    const j=await r.json();if(j.permissions&&!j.permissions.push){toast("O token precisa de permissão de escrita em Contents.");return}
-    try{localStorage.setItem("gh-token",v)}catch(e){}close();toast("GitHub ativado.");flushLocal()};
-  if(tok())$("#stokdel").onclick=()=>{try{localStorage.removeItem("gh-token")}catch(e){}close();toast("Token removido deste aparelho.")};
+  const reopen=()=>{close();settings()};
+  const err=e=>({"auth/invalid-credential":"E-mail ou senha incorretos.","auth/wrong-password":"E-mail ou senha incorretos.","auth/user-not-found":"E-mail ou senha incorretos.",
+    "auth/email-already-in-use":"Esse e-mail já tem conta. Use Entrar.","auth/weak-password":"A senha precisa ter pelo menos 6 caracteres.",
+    "auth/invalid-email":"Esse e-mail não parece válido.","auth/too-many-requests":"Muitas tentativas. Espere alguns minutos.",
+    "auth/network-request-failed":"Sem internet no momento."}[e&&e.code]||"Não deu certo. Tente de novo.");
+  const cred=()=>[($("#aem").value||"").trim().toLowerCase(),$("#apw").value||""];
+  const on=(id,fn)=>{const el=$(id);if(el)el.onclick=async()=>{el.disabled=true;try{await fn()}catch(e){toast(err(e))}el.disabled=false}};
+  on("#ain",async()=>{const [em,pw]=cred();await FB.auth.signInWithEmailAndPassword(em,pw);USER=FB.auth.currentUser;await loadRole();reopen();toast("Conectado.")});
+  on("#anew",async()=>{const [em,pw]=cred();const r=await FB.auth.createUserWithEmailAndPassword(em,pw);await r.user.sendEmailVerification();USER=r.user;await loadRole();reopen();toast("Conta criada. Abra o link que chegou no seu e-mail.")});
+  on("#aforgot",async()=>{const [em]=cred();if(!em)return toast("Digite seu e-mail primeiro.");await FB.auth.sendPasswordResetEmail(em);toast("Enviamos um link para criar uma nova senha.")});
+  on("#aresend",async()=>{await USER.sendEmailVerification();toast("Link reenviado. Confira também o spam.")});
+  on("#acheck",async()=>{await USER.reload();USER=FB.auth.currentUser;await USER.getIdToken(true);await loadRole();reopen();
+    toast(USER.emailVerified?(ROLE.editor?"E-mail confirmado. Você já pode editar para o grupo.":"E-mail confirmado. Falta liberar sua conta."):"Ainda não confirmado. Abra o link do e-mail.");flushLocal()});
+  on("#aout",async()=>{await FB.auth.signOut();USER=null;ROLE={editor:false,admin:false,emails:[]};reopen();toast("Você saiu da conta.")});
+  on("#alist",async()=>{const emails=[...new Set(($("#aemails").value||"").split(/[\s,;]+/).map(x=>x.trim().toLowerCase()).filter(x=>x.includes("@")))];
+    await FB.db.doc("config/editores").set({admin:USER.email.toLowerCase(),emails});await loadRole();toast("Lista salva.")});
   if(c)$("#saddrok").onclick=()=>{const v=$("#saddr").value.trim();try{v?localStorage.setItem("endereco-"+c.id,v):localStorage.removeItem("endereco-"+c.id)}catch(e){}toast("Endereço salvo neste aparelho.")};
   $("#sdone").onclick=()=>{done={};store.set("feito",done);toast("Paradas desmarcadas.")};
   $("#sphotos").onclick=()=>{Object.keys(photos).forEach(k=>DB.del(k));for(const k in photos)delete photos[k];toast("Fotos deste aparelho apagadas.")};
@@ -519,17 +580,59 @@ const ICON={
   cam:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`,
   pen:`<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`};
 const tools=()=>`<div class="tools"><button class="iconbtn" id="tedit" aria-pressed="${!!view.edit}" aria-label="Editar">${ICON.pen}</button><button class="iconbtn" id="tset" aria-label="Ajustes">${ICON.gear}</button></div>`;
-function bindTools(){$("#tedit").onclick=()=>{view.edit=!view.edit;store.set("edit",view.edit);rerender();if(view.edit)toast("No Guia de cada parada aparecem os campos para adicionar vídeos, spots, poses e notas.")};$("#tset").onclick=settings}
+function bindTools(){$("#tedit").onclick=()=>{view.edit=!view.edit;store.set("edit",view.edit);rerender();if(view.edit)toast("modo de edição ligado. no guia de cada parada aparecem os campos para adicionar vídeos, spots, poses e notas.")};$("#tset").onclick=settings}
 
 /* estado */
 let view={city:null,day:0,open:null,filter:"all",vid:null,edit:!!store.get("edit")};
 
-function home(){
-  const fl=[["all","Todos"],...[...new Set(TRIP.cities.map(c=>c.flag))].map(f=>[f,f])];
-  const cities=TRIP.cities.filter(c=>view.filter==="all"||c.flag===view.filter);
+/* viagens */
+const BASE={id:"japao-26",nome:"japão 26",datas:"01/11 a 20/11"};
+let CUR=null;
+function VIAGENS(){
+  const out=[{...BASE,...(ED.viagens[BASE.id]||{}),id:BASE.id,base:1,cities:TRIP.cities}];
+  for(const [id,v] of Object.entries(ED.viagens))if(id!==BASE.id&&!v.del&&v.nome)out.push({id,nome:v.nome,datas:v.datas||"",cities:[]});
+  return out}
+const tripCover=t=>photos["capa-v-"+t.id]||imgSrc(ED.capas["v-"+t.id])||null;
+function openTrip(id){CUR=VIAGENS().find(t=>t.id===id)||null;view.city=null;view.filter="all";if(!CUR)return trips();
+  try{history.replaceState(null,"","#"+id)}catch(e){}home();scrollTo(0,0)}
+function trips(){
+  CUR=null;view.city=null;const L=VIAGENS();
   $("#app").innerHTML=`
-   <div class="top"><h1>Japão 2026</h1>${tools()}</div>
-    <div class="flags">${fl.map(([v,l])=>`<button class="flag${v==="all"?" txt":""}" aria-pressed="${view.filter===v}" data-f="${v}">${l}</button>`).join("")}</div>
+   <div class="top"><div class="mark">roteiro</div>${tools()}</div>
+   <div class="trips">${L.map(t=>{const n=t.cities.filter(c=>c.days).length,cv=tripCover(t);return `
+    <div class="trip${cv?" has":""}" data-t="${t.id}" role="button" tabindex="0">${cv?`<img class="cimg" src="${esc(cv)}" alt="">`:""}
+     <div class="tname">${esc(t.nome)}</div>
+     <div class="tmeta">${[t.datas,n?(n>1?n+" cidades":"1 cidade"):"sem roteiro ainda"].filter(Boolean).map(esc).join(", ")}</div>
+     <div class="tbtns"><button class="cover-edit" data-tc="${t.id}" aria-label="Trocar capa">${ICON.cam}<span>capa</span></button>
+      ${view.edit?`<button class="cover-edit" data-te="${t.id}">editar</button>`:""}</div></div>`}).join("")}
+    <button class="newtrip" id="newtrip"><span aria-hidden="true">+</span>nova viagem</button></div>`;
+  document.querySelectorAll("[data-t]").forEach(b=>{b.onclick=e=>{if(!e.target.closest(".cover-edit"))openTrip(b.dataset.t)};b.onkeydown=e=>{if(e.key==="Enter")openTrip(b.dataset.t)}});
+  document.querySelectorAll("[data-tc]").forEach(b=>b.onclick=()=>{const t=L.find(x=>x.id===b.dataset.tc);editPhoto("capa-v-"+t.id,t.nome,trips,t.nome)});
+  document.querySelectorAll("[data-te]").forEach(b=>b.onclick=()=>tripSheet(L.find(x=>x.id===b.dataset.te)));
+  $("#newtrip").onclick=()=>tripSheet(null);
+  bindTools();
+}
+function tripSheet(t){
+  const close=sheet(`<div class="eyebrow">${t?"editar viagem":"nova viagem"}</div><h3>${t?esc(t.nome):"para onde?"}</h3>
+    <div class="gform" style="border:0;padding:0;margin:0">
+     <input id="tnome" class="field" type="text" placeholder="nome, por exemplo japão 26" value="${t?esc(t.nome):""}" autocomplete="off">
+     <input id="tdatas" class="field" type="text" placeholder="datas, por exemplo 01/11 a 20/11" value="${t?esc(t.datas||""):""}" autocomplete="off"></div>
+    <div class="pmsg" id="pmsg"></div>
+    <div class="acts">${t&&!t.base?`<button class="btn" id="tdel">excluir</button>`:""}<button class="btn" id="pclose" style="margin-left:auto">fechar</button><button class="btn go" id="tok">${t?"salvar":"criar"}</button></div>
+    ${t?"":`<div class="hint">depois é só mandar os pdfs do wanderlog para montar as cidades e os dias.</div>`}`,trips);
+  $("#tnome").focus();$("#pclose").onclick=close;
+  $("#tok").onclick=async()=>{const nome=$("#tnome").value.trim().toLowerCase(),datas=$("#tdatas").value.trim();if(!nome){$("#pmsg").textContent="dê um nome para a viagem.";return}
+    const id=t?t.id:nome.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")+"-"+Date.now().toString(36).slice(-4);
+    await saveOps([{t:"trip",id,v:{nome,datas}}]);close()};
+  if(t&&!t.base)$("#tdel").onclick=async()=>{const b=$("#tdel");if(b.dataset.sure){await saveOps([{t:"trip",id:t.id,v:null}]);close()}else{b.dataset.sure=1;b.textContent="toque de novo para excluir"}};
+}
+
+function home(){
+  const fl=[["all","todos"],...[...new Set(CUR.cities.map(c=>c.flag))].map(f=>[f,f])];
+  const cities=CUR.cities.filter(c=>view.filter==="all"||c.flag===view.filter);
+  $("#app").innerHTML=`
+   <div class="top"><button class="back" id="tback" aria-label="Viagens">←</button><h1>${esc(CUR.nome)}</h1>${tools()}</div>
+    ${cities.length?`<div class="flags">${fl.map(([v,l])=>`<button class="flag${v==="all"?" txt":""}" aria-pressed="${view.filter===v}" data-f="${v}">${l}</button>`).join("")}</div>`:""}
    <div class="cities">${cities.map(c=>c.days?`
     <div class="city${coverOf(c)?" has":""}" data-c="${c.id}" role="button" tabindex="0">${coverOf(c)?`<img class="cimg" src="${esc(coverOf(c))}" alt="">`:""}<span class="kanji">${c.kanji}</span>
      <div class="name">${c.flag} ${esc(c.name)}</div><div class="dates">${c.dates}</div>
@@ -537,15 +640,17 @@ function home(){
      <button class="cover-edit" data-cover="${c.id}" aria-label="Trocar capa de ${esc(c.name)}">${ICON.cam}<span>Capa</span></button></div>`:`
     <div class="city soon"><span class="kanji ja">${c.kanji}</span>
      <div class="name" style="font-size:20px">${c.flag} ${esc(c.name)}</div><div class="dates muted">${c.dates}</div>
-     <div class="stat">Roteiro em breve</div></div>`).join("")}</div>`;
+     <div class="stat">Roteiro em breve</div></div>`).join("")}</div>
+   ${CUR.cities.length?"":`<div class="emptytrip"><p>ainda sem cidades.</p><p class="muted">exporte o roteiro do wanderlog em pdf e mande para montar as cidades, os dias e os trechos.</p></div>`}`;
+  $("#tback").onclick=()=>{try{history.replaceState(null,"","#inicio")}catch(e){}trips();scrollTo(0,0)};
   document.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{view.filter=b.dataset.f;home()});
   document.querySelectorAll("[data-c]").forEach(b=>{b.onclick=e=>{if(!e.target.closest(".cover-edit"))openCity(b.dataset.c)};b.onkeydown=e=>{if(e.key==="Enter")openCity(b.dataset.c)}});
-  document.querySelectorAll("[data-cover]").forEach(b=>b.onclick=()=>{const c=TRIP.cities.find(x=>x.id===b.dataset.cover);editPhoto("capa-"+c.id,c.name,home,c.area)});
+  document.querySelectorAll("[data-cover]").forEach(b=>b.onclick=()=>{const c=CUR.cities.find(x=>x.id===b.dataset.cover);editPhoto("capa-"+c.id,c.name,home,c.area)});
   bindTools();
 }
 
 function openCity(id,dayIdx){
-  const c=TRIP.cities.find(x=>x.id===id);view.city=c;view.open=null;
+  if(!CUR)CUR=VIAGENS()[0];const c=CUR.cities.find(x=>x.id===id);view.city=c;view.open=null;
   const today=jstToday();const ti=c.days.findIndex(d=>d.d===today);
   view.day=dayIdx!=null?dayIdx:(ti>=0?ti:(store.get("dia-"+id)??0));
   try{history.replaceState(null,"","#"+id)}catch(e){}
@@ -602,7 +707,7 @@ function city(){
     <details class="map" id="mapd"${store.get("mapa")?" open":""}><summary>Mapa do dia</summary><div class="mapbox">${mapSVG(day)}</div></details>
    </div>`;
 
-  $("#back").onclick=()=>{view.city=null;try{history.replaceState(null,"","#inicio")}catch(e){};home();scrollTo(0,0)};
+  $("#back").onclick=()=>{view.city=null;try{history.replaceState(null,"","#"+CUR.id)}catch(e){};home();scrollTo(0,0)};
   document.querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>{view.day=+b.dataset.day;view.open=null;view.vid=null;city()});
   document.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{const i=+b.dataset.o;view.open=view.open===i?null:i;view.vid=null;city()});
   document.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{const k=key(+b.dataset.d);if(done[k])delete done[k];else done[k]=1;store.set("feito",done);view.open=null;city()});
@@ -692,14 +797,16 @@ function loadData(){return fetch("dados.js?v="+Date.now(),{cache:"no-store"}).th
   .catch(()=>new Promise(res=>{const sc=document.createElement("script");sc.src="dados.js";sc.onload=res;sc.onerror=res;document.head.appendChild(sc)}))}
 let lastCheck=Date.now();
 document.addEventListener("visibilitychange",async()=>{if(document.hidden||Date.now()-lastCheck<20000)return;lastCheck=Date.now();
-  const before=ED_TEXT;await loadEd();if(ED_TEXT!==before&&$("#jaov").hidden)rerender();
+  const before=ED_TEXT;await loadEd();if(ED_TEXT!==before&&$("#jaov").hidden)rerender();flushLocal();
   try{const t=await (await fetch("dados.js?v="+Date.now(),{cache:"no-store"})).text();if(DATA_TEXT&&t&&t!==DATA_TEXT)toast("Há uma versão nova do roteiro.",["Atualizar",reloadApp])}catch(e){}});
 Promise.all([loadData(),DB.load(),loadEd()]).then(function(){
   const today=jstToday(),h=location.hash.slice(1);
   const c=TRIP.cities.find(c=>c.days&&c.days.some(d=>d.d===today));
-  if(c)openCity(c.id);else if(h&&TRIP.cities.some(x=>x.id===h&&x.days))openCity(h);else home();
+  if(c){CUR=VIAGENS()[0];openCity(c.id)}
+  else if(h&&TRIP.cities.some(x=>x.id===h&&x.days)){CUR=VIAGENS()[0];openCity(h)}
+  else if(h&&VIAGENS().some(t=>t.id===h))openTrip(h);else trips();
   if(location.search)try{history.replaceState(null,"",location.pathname+location.hash)}catch(e){}
-  flushLocal();
+  initFirebase();
 });
 </script>
 
