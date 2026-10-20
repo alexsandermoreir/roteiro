@@ -12,7 +12,7 @@ const TRIP={cities:[
  {id:"istambul",name:"Istambul",flag:"🇹🇷",kanji:"İST",dates:"01/11",area:"Istanbul",wl:"tr",lang:"Türkçe",
   home:{n:"Aeroporto",p:[41.2753,28.7519],q:"Istanbul Airport"},
   days:[
-  {d:"2026-11-01",label:"Escala com o Touristanbul",depart:"Chegada às 13h55. Voo para Tóquio às 2h30.",items:[
+  {d:"2026-11-01",label:"Escala com o Touristanbul",depart:"Chegada às 13h55 (TK 16). Voo TK 198 para Tóquio às 2h30 do dia 2, chegando às 19h45.",items:[
    {n:"Aeroporto de Istambul",ja:"İstanbul Havalimanı",w:"Istanbul Airport",p:[41.2753,28.7519]},
    {n:"Coluna de Constantino",ja:"Çemberlitaş Sütunu",w:"Column of Constantine",p:[41.0086,28.9714],leg:tour(74,68,"Ônibus do Touristanbul"),info:"No passeio"},
    {n:"Mesquita Nuruosmaniye",ja:"Nuruosmaniye Camii",w:"Nuruosmaniye Mosque",p:[41.0103,28.9707],leg:w(4,.3),info:"No passeio"},
@@ -88,7 +88,7 @@ const TRIP={cities:[
    {n:"Odaiba Marine Park",ja:"お台場海浜公園",p:[35.6297,139.7752],leg:w(30,2.5),note:"Tokyo Aqua Symphony: shows de 10 minutos às 15h, 15h45, 16h30, 17h15, 18h, 18h45, 19h30, 20h15, 21h e 21h30. Programação de novembro a confirmar.",links:[["Programação","https://tokyoaquasymphony.jp/en/schedule/"]]},
    {n:"Estátua da Liberdade",ja:"自由の女神像",p:[35.6278,139.7717],leg:w(6,.49)},
    {alt:"Plano B, sem o A-PIT: voltar direto para casa pela Tokyo Teleport",leg:t(0,0,540,[["R","Shibuya","Tokyo Teleport"]])},
-   {n:"A-PIT Autobacs",ja:"A PIT オートバックス東雲",p:[35.6440,139.8040],leg:t(25,4,210,[["B01","Fukagawa-Shako-Iriguchi"]])},
+   {n:"A-PIT Autobacs",ja:"A PIT オートバックス東雲",p:[35.6440,139.8040],leg:t(25,4,210,[["B01","Fukagawa-Shako-Iriguchi","Daiba Station"]])},
    {n:"Daikoku Parking Area",ja:"大黒パーキングエリア",p:[35.4620,139.6830],leg:tour(96,28),note:"Passeio com agência."},
    {n:"Shibuya Crossing",ja:"渋谷スクランブル交差点",p:[35.6595,139.7005],leg:tour(75,29),note:"Parada final da experiência Tokyo Drift."}],
    end:w(10,.8)},
@@ -226,11 +226,12 @@ const TRIP={cities:[
    {n:"Rua Myeongdong",ja:"명동",w:"",p:[37.5636,126.9830],leg:w(26,2.2)},
    {n:"Mercado noturno",ja:"명동 야시장",w:"",p:[37.5630,126.9850],leg:w(4,.31)}],
    end:w(10,.86)},
-  {d:"2026-11-20",label:"Palácios e Insa-dong",start:1,depart:"Voo de saída às 0h05 do dia 21",items:[
+  {d:"2026-11-20",label:"Palácios, Insa-dong e DDP",start:1,depart:"Voo de saída às 0h05 do dia 21",items:[
    {n:"Gyeongbokgung",ja:"경복궁",w:"Gyeongbokgung",p:[37.5796,126.9770]},
    {n:"Bukchon Hanok",ja:"북촌한옥마을",w:"Bukchon Hanok Village",p:[37.5826,126.9830]},
    {n:"Templo Jogyesa",ja:"조계사",w:"Jogyesa",p:[37.5740,126.9817]},
-   {n:"Insa-dong",ja:"인사동",w:"Insa-dong",p:[37.5740,126.9860]}]}
+   {n:"Insa-dong",ja:"인사동",w:"Insa-dong",p:[37.5740,126.9860]},
+   {n:"Dongdaemun Design Plaza",ja:"동대문디자인플라자",w:"Dongdaemun Design Plaza",p:[37.5670,127.0090],leg:t(24,2.8,0,[]),info:"10h00 às 20h00"}]}
  ]}
 ]};
 
