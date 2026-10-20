@@ -1455,7 +1455,7 @@ function city(){
      ${nx.note?`<p>${esc(nx.note)}</p>`:""}
      <div class="acts"><button class="btn go" data-r="${nextIdx}">Ir</button>${nx.home?`<button class="btn" data-h aria-label="hospedagem">${ico("airbnb",20)}</button>`:""}
       <button class="btn" data-ja="${nextIdx}" aria-label="Mostrar no idioma local">${c.lang}</button>
-      ${chk(nextIdx,false,1)}${view.edit?`<button class="btn" data-ed="${nextIdx}" aria-label="editar parada">${ICON.pen}</button>`:""}</div>
+      ${chk(nextIdx,false,0)}${view.edit?`<button class="btn" data-ed="${nextIdx}" aria-label="editar parada">${ICON.pen}</button>`:""}</div>
      ${!nx.home&&gCount(guideData(c,nx,ek(nx)))?`<button class="btn wide guidebtn" data-g="${nextIdx}">Guia do lugar<span class="cnt">${gCount(guideData(c,nx,ek(nx)))}</span></button>`:""}</section>`
    :`<section class="focus alldone"><div class="eyebrow">Dia concluído</div><p>Todas as paradas foram marcadas.</p></section>`;
 
@@ -1526,7 +1526,7 @@ function city(){
       <button class="btn sm" data-ja="${i}">${c.lang}</button>
       <button class="btn sm" data-sh="${i}">Compras${(gn=it.home?0:shopCount(c,it))?` <span class="cnt">${gn}</span>`:""}</button>
       <button class="btn sm" data-g="${i}">Guia${(gn=gCount(guideData(c,it,ek(it))))?` <span class="cnt">${gn}</span>`:""}</button>
-      ${chk(i,isDone,1)}${view.edit?`<button class="btn sm" data-ed="${i}">${ICON.pen} editar</button>`:""}</div></div>`;
+      ${chk(i,isDone,0)}${view.edit?`<button class="btn sm" data-ed="${i}">${ICON.pen} editar</button>`:""}</div></div>`;
   }
 }
 
