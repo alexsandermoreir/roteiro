@@ -578,7 +578,8 @@ function sheet2(html,onClose){const o=$("#ov2");o.innerHTML=`<div class="sheet" 
   const close=()=>{o.hidden=true;o.innerHTML="";onClose&&onClose()};o.onclick=e=>{if(e.target===o)close()};o.scrollTop=0;return close}
 const idle=()=>$("#jaov").hidden&&$("#ov2").hidden;
 let HOSP={},unsubH=null;
-const hosp=c=>(c&&HOSP[c.id])||{};
+const hospLocal=c=>{try{return JSON.parse(localStorage.getItem("hosp-"+c.id)||"{}")}catch(e){return {}}};
+const hosp=c=>c?{...hospLocal(c),...(HOSP[c.id]||{})}:{};
 const hospAddr=c=>hosp(c).endereco||(c&&c.id===(view.city&&view.city.id)?addr():"")||(c&&c.home&&c.home.q)||"";
 const placeQ=(c,it)=>it.qq||(it.home?hospAddr(c):(it.q||`${it.n||it.title||""}, ${c.area}`));
 function prevStop(day,i){for(let j=i-1;j>=0;j--){const x=day.items[j];if(x.n||x.home)return x}return day.start?{home:1}:null}
@@ -627,21 +628,18 @@ function hospSheet(c){
   const head=`<div class="gh"><div><div class="eyebrow">${ico("airbnb",15)} hospedagem</div><h3>${esc(c.name)}</h3></div><button class="iconbtn" id="hx" aria-label="fechar">${ico("x",20)}</button></div>`;
   const draw=()=>{
     const b=$("#hbox");
-    if(!FB){b.innerHTML=head+`<p class="empty">sem conexão com o firebase agora.</p>`;$("#hx").onclick=close;return}
-    if(!(USER&&ROLE.editor)){
-      b.innerHTML=head+`<p class="gvtext" style="margin:14px 0">os dados da hospedagem (endereço, anfitrião, senhas) só aparecem para quem está na conta do grupo.</p>
-        <div class="acts"><button class="btn go" id="hlogin">entrar na conta</button></div>`;
-      $("#hx").onclick=close;$("#hlogin").onclick=()=>{close();settings()};return}
     const d={...hosp(c)},fields=HF(c),has=fields.some(([k])=>d[k]);if(!d.endereco){const la=addr();if(la)d.endereco=la}
     if(editing||!has){
       b.innerHTML=head+`<div class="frm">${fields.map(([k,l,t])=>t==="area"?`<label class="lbl2">${esc(l)}<textarea class="field area" rows="2" data-f="${k}">${esc(d[k]||"")}</textarea></label>`
         :`<label class="lbl2">${esc(l)}<input class="field" data-f="${k}" type="text" value="${esc(d[k]||"")}" autocomplete="off" ${t==="secret"?'autocapitalize="off"':""}></label>`).join("")}</div>
         ${has?"":`<div class="hint left">ainda não há dados salvos. o ponto aproximado no mapa é "${esc(c.home.q||c.home.n)}". preencha o endereço real do airbnb.</div>`}
         <div class="acts"><button class="btn" id="hcancel">${has?"cancelar":"fechar"}</button><button class="btn go" id="hsave" style="margin-left:auto">salvar</button></div>
-        <div class="hint">guardado só no firebase, visível para quem está na lista do grupo.</div>`;
+        <div class="hint">${canShare()?"Fica salvo para o grupo, só quem entrou na conta vê.":"Fica salvo só neste aparelho. Entre na conta, na engrenagem, para o grupo ver."}</div>`;
       $("#hx").onclick=close;$("#hcancel").onclick=()=>{if(has){editing=false;draw()}else close()};
       $("#hsave").onclick=async()=>{const vals={};document.querySelectorAll("#hbox [data-f]").forEach(el=>vals[el.dataset.f]=el.value.trim());
-        try{await FB.db.doc("hospedagens/"+c.id).set(vals,{merge:true});HOSP[c.id]={...d,...vals};toast("hospedagem salva.");editing=false;draw()}catch(e){toast("não consegui salvar. confira as regras do firebase.")}};
+        let shared=false;if(canShare()){try{await FB.db.doc("hospedagens/"+c.id).set(vals,{merge:true});HOSP[c.id]={...d,...vals};shared=true}catch(e){}}
+          if(!shared){try{localStorage.setItem("hosp-"+c.id,JSON.stringify({...hospLocal(c),...vals}))}catch(e){}}
+          toast(shared?"hospedagem salva para o grupo.":"hospedagem salva neste aparelho.");editing=false;draw()};
       return}
     b.innerHTML=head+`<div class="ficha">${fields.filter(([k])=>d[k]).map(([k,l,t])=>`<div class="fr h"><span>${esc(l)}</span>
       <div class="${t==="secret"?"secret":""}" data-v="${k}">${t==="secret"?"••••••":t==="url"?`<a href="${esc(d[k])}" target="_blank" rel="noopener">abrir ↗</a>`:esc(d[k])}</div>
