@@ -892,8 +892,10 @@ const dayPts=(c,day)=>{const P=[];let n=0;
   if(day.end)P.push({p:hospP(c),home:1,t:c.home.n,leg:day.end});return P};
 const gLink=P=>"https://www.google.com/maps/dir/?api=1&travelmode=walking&origin="+enc(P[0].p.join(","))+"&destination="+enc(P[P.length-1].p.join(","))+(P.length>2?"&waypoints="+P.slice(1,-1).slice(0,8).map(x=>enc(x.p.join(","))).join("%7C"):"");
 const RT=(()=>{try{return JSON.parse(localStorage.getItem("rtc"))||{}}catch(e){return {}}})();
-const thin=(a,max=70)=>{if(a.length<=max)return a;const st=(a.length-1)/max,o=[];for(let i=0;i<max;i++)o.push(a[Math.floor(i*st)]);o.push(a[a.length-1]);return o};
-async function walkPath(a,b){const f=x=>(+x).toFixed(4),k=a.map(f).join()+">"+b.map(f).join();if(RT[k])return RT[k];
+const thin=(a,max=40)=>{if(a.length<=max)return a;const st=(a.length-1)/max,o=[];for(let i=0;i<max;i++)o.push(a[Math.floor(i*st)]);o.push(a[a.length-1]);return o};
+let wpQ=Promise.resolve();
+function walkPath(a,b){const p=wpQ.then(()=>walkPath1(a,b));wpQ=p.catch(()=>{});return p}
+async function walkPath1(a,b){const f=x=>(+x).toFixed(4),k=a.map(f).join()+">"+b.map(f).join();if(RT[k])return RT[k];
   const r=await Promise.race([fetch(`https://routing.openstreetmap.de/routed-foot/route/v1/foot/${a[1]},${a[0]};${b[1]},${b[0]}?overview=full&geometries=geojson`).then(r=>r.json()),new Promise((_,j)=>setTimeout(()=>j(0),7000))]);
   const g=r.routes&&r.routes[0]&&r.routes[0].geometry.coordinates;if(!g||g.length<2)throw 0;
   const pts=thin(g.map(([x,y])=>[+y.toFixed(5),+x.toFixed(5)]));RT[k]=pts;
@@ -910,8 +912,8 @@ async function buildDayMap(host,c,fresh,opts){
   host.innerHTML=`<div class="lmap${opts.full?" full":""}"></div>`;const el=host.firstChild;
   const m=L.map(el,{zoomControl:false,attributionControl:false,tap:true});
   L.control.zoom({position:"bottomright"}).addTo(m);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png",{maxZoom:19,subdomains:"abcd"}).addTo(m);
-  const Cr=L.Control.extend({options:{position:"bottomleft"},onAdd(){const d=L.DomUtil.create("div","mcredit");d.innerHTML='<button type="button" aria-label="créditos do mapa">i</button><span hidden>© OpenStreetMap, CARTO</span>';
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",{maxZoom:19}).addTo(m);
+  const Cr=L.Control.extend({options:{position:"bottomleft"},onAdd(){const d=L.DomUtil.create("div","mcredit");d.innerHTML='<button type="button" aria-label="créditos do mapa">i</button><span hidden>© Esri, HERE, Garmin, OpenStreetMap</span>';
     const b=d.firstChild,sp=d.lastChild;b.onclick=e=>{e.stopPropagation();sp.hidden=!sp.hidden};L.DomEvent.disableClickPropagation(d);return d}});new Cr().addTo(m);
   const mid=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2];
   for(let i=1;i<P.length;i++){const l=P[i].leg||{m:"w"},a=P[i-1].p,b=P[i].p,tr=l.m==="t"&&l.segs&&l.segs.length,walk=!l.m||l.m==="w";
@@ -1592,7 +1594,7 @@ function showJa(it){
 
 /* gestos: arrastar para o lado troca o dia */
 let sx=0,sy=0;
-document.addEventListener("touchstart",e=>{if(!view.city||!$("#jaov").hidden||!$("#ov2").hidden||e.target.closest(".days,.mapbox,.vids,#mapreal"))return sx=null;sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+document.addEventListener("touchstart",e=>{if(!view.city||!$("#jaov").hidden||!$("#ov2").hidden||!$("#ovm").hidden||e.target.closest(".days,.mapbox,.vids,#mapreal"))return sx=null;sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
 document.addEventListener("touchend",e=>{if(!view.city||sx==null)return;const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
   if(Math.abs(dx)>70&&Math.abs(dy)<45){const nd=view.day+(dx<0?1:-1);if(nd>=0&&nd<view.city.days.length){view.day=nd;view.open=null;city();scrollTo(0,0)}}},{passive:true});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("#jaov").hidden=true;$("#jaov").className="jaov"}});
