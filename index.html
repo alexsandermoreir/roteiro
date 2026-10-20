@@ -254,6 +254,43 @@ h1,h2,h3,.eyebrow,.lbl,.btn,.bar-title,.city .name,.city .dates,.city .stat,.dch
 .emptytrip p{margin:0 0 6px}
 .alldone{text-align:center;padding:8px 0}
 @media (prefers-reduced-motion:no-preference){.day{animation:in .18s ease-out}@keyframes in{from{opacity:.4;transform:translateY(4px)}}}
+
+.ic{flex:none;vertical-align:-3px}
+.mapframe{width:100%;height:46vh;min-height:280px;border:1px solid var(--hair);border-radius:14px;margin-top:12px;background:var(--soft)}
+.mapframe.wait{display:grid;place-items:center;color:var(--muted)}
+.gh{display:flex;gap:10px;align-items:flex-start;margin-bottom:6px}.gh h3{margin:2px 0 4px}.gh .eyebrow{display:flex;gap:6px;align-items:center}
+.gchips{display:flex;gap:8px;overflow-x:auto;padding:12px 0;scrollbar-width:none}.gchips::-webkit-scrollbar{display:none}
+.gchip{flex:none;height:34px;padding:0 13px;border-radius:17px;border:1px solid var(--hair);font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:6px;color:var(--fg);background:var(--surface)}
+.gchip i{font-style:normal;color:var(--muted);font-weight:500}
+.gchip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}.gchip[aria-pressed="true"] i{color:inherit;opacity:.7}
+.ggrid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;grid-auto-flow:dense;margin:0 -2px 90px}
+.gt{position:relative;aspect-ratio:1;overflow:hidden;background:var(--soft);display:flex;align-items:flex-end;text-align:left;padding:0;color:var(--fg);border-radius:4px}
+.gt.big{grid-column:span 2;grid-row:span 2}
+.gt img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.gt.hasimg::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 45%,rgba(0,0,0,.6))}
+.gt.hasimg .gtxt{color:#fff;z-index:1}
+.gtxt{position:relative;padding:7px 8px;font-size:12px;font-weight:600;line-height:1.25;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.gglyph{position:absolute;top:50%;left:50%;transform:translate(-50%,-70%);color:var(--muted)}
+.gbadge{position:absolute;top:6px;right:6px;z-index:2;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+.gfab{position:fixed;right:max(18px,calc(50% - 202px));bottom:calc(22px + env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:28px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:25}
+.gempty{text-align:center;padding:40px 10px;color:var(--muted)}.gempty p{margin:10px 0}
+.tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.tbtn{aspect-ratio:1.15;border:1px solid var(--hair);border-radius:16px;display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center;font-size:14px;font-weight:600;background:var(--surface);color:var(--fg)}
+.gm{margin-top:12px;border-radius:14px;overflow:hidden;background:#000}.gm iframe{display:block;width:100%;border:0}
+.gm.tt iframe,.gm.ig iframe{height:560px}.gm.yt iframe{aspect-ratio:16/9;height:auto}
+.gm.open{display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center;height:160px;color:#fff;text-decoration:none}
+.gvimg{width:100%;border-radius:14px;margin-top:12px;display:block}
+.gvinfo{padding:14px 0 4px}.gvtype{display:flex;gap:6px;align-items:center;font-size:13px;font-weight:600;color:var(--muted)}
+.gvinfo h4{margin:8px 0 4px;font-size:18px}.gvtext{margin:8px 0;line-height:1.5;white-space:pre-wrap}.gvprice{font-weight:700;margin:6px 0}
+.coords{display:flex;gap:10px;align-items:center;font-variant-numeric:tabular-nums;color:var(--muted);font-size:14px;margin-top:8px}
+.ficha{border:1px solid var(--hair);border-radius:14px;margin:10px 0;padding:2px 14px}
+.fr{display:grid;grid-template-columns:96px 1fr auto;gap:10px;padding:11px 0;border-top:1px solid var(--hair);font-size:15px;align-items:center}.fr:first-child{border-top:0}
+.fr>span{color:var(--muted);font-size:13px}.fr>div{min-width:0;overflow-wrap:anywhere}
+.fr.h .hbtns{display:flex;gap:6px;align-items:center}.fr:not(.h){grid-template-columns:96px 1fr}
+.lbl2{display:block;font-size:13px;font-weight:600;color:var(--muted)}.lbl2 .field{margin-top:6px;display:block}
+.frm{display:flex;flex-direction:column;gap:10px;margin-top:12px}.frm .field{max-width:none}
+.prevw{max-width:100%;max-height:200px;border-radius:12px}
+.seg.rseg{margin-top:14px}
 </style>
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
 </head>
@@ -261,6 +298,7 @@ h1,h2,h3,.eyebrow,.lbl,.btn,.bar-title,.city .name,.city .dates,.city .stat,.dch
 
 <div class="wrap" id="app"></div>
 <div class="jaov" id="jaov" hidden role="dialog" aria-modal="true"></div>
+<div class="jaov" id="ov2" hidden role="dialog" aria-modal="true" style="z-index:30"></div>
 <div class="toast" id="toast" hidden role="status"></div>
 
 <script>
@@ -385,10 +423,12 @@ async function initFirebase(){
   firebase.initializeApp(FB_CFG);const db=firebase.firestore();
   try{await db.enablePersistence({synchronizeTabs:true})}catch(e){}
   FB={db,auth:firebase.auth()};
-  let t;const later=()=>{clearTimeout(t);t=setTimeout(()=>{if($("#jaov").hidden)rerender()},200)};
+  let t;const later=()=>{clearTimeout(t);t=setTimeout(()=>{if($("#jaov").hidden&&$("#ov2").hidden)rerender()},200)};
   db.doc("roteiro/edicoes").onSnapshot(s=>{FS_ED=parseFs(s);recompute();later()},()=>{});
   db.collection("fotos").onSnapshot(q=>{q.docChanges().forEach(ch=>{if(ch.type==="removed")delete FOTOS[ch.doc.id];else FOTOS[ch.doc.id]=ch.doc.data().data});later()},()=>{});
-  FB.auth.onAuthStateChanged(async u=>{USER=u;await loadRole();flushLocal()});
+  FB.auth.onAuthStateChanged(async u=>{USER=u;await loadRole();flushLocal();
+    if(unsubH){unsubH();unsubH=null}HOSP={};
+    if(canShare())unsubH=db.collection("hospedagens").onSnapshot(q=>{HOSP={};q.forEach(d=>HOSP[d.id]=d.data());later()},()=>{})});
 }
 const opFor=(k,url)=>k.startsWith("capa-")?{t:"capa",c:k.slice(5),url}:{t:"foto",k,url};
 
@@ -399,20 +439,6 @@ let toastT;function toast(t,act){const el=$("#toast");el.innerHTML=`<span>${esc(
 const rerender=()=>view.city?city():CUR?home():trips();
 function reloadApp(){const h=location.hash;location.replace(location.pathname+"?v="+Date.now()+h)}
 
-/* google imagens dentro do app (Programmable Search Element) */
-const GCX="9262b34147cbe4241";
-let gReady=null,gPending=null;
-function googleImages(q){
-  if(!GCX)return Promise.resolve(null);
-  if(!gReady)gReady=new Promise((res,rej)=>{
-    window.__gcse={parsetags:"explicit",initializationCallback:()=>{
-      let box=document.getElementById("gcsebox");if(!box){box=document.createElement("div");box.id="gcsebox";box.hidden=true;document.body.appendChild(box)}
-      google.search.cse.element.render({div:"gcsebox",tag:"searchresults-only",gname:"fotos",attributes:{enableImageSearch:true,defaultToImageSearch:true,disableWebSearch:true,imageSearchResultSetSize:"large",enableHistory:false}});res()},
-      searchCallbacks:{image:{ready:(name,qq,promos,results)=>{if(gPending){gPending(results||[]);gPending=null}return true}}}};
-    loadScript("https://cse.google.com/cse.js?cx="+GCX).catch(rej)});
-  return gReady.then(()=>new Promise(res=>{const t=setTimeout(()=>{gPending=null;res(null)},8000);
-    gPending=r=>{clearTimeout(t);res(r.map(x=>{const full=(x.image&&x.image.url)||x.url,thumb=(x.thumbnailImage&&x.thumbnailImage.url)||full;return full?{full,thumb}:null}).filter(Boolean))};
-    google.search.cse.element.getElement("fotos").execute(q)}))}
 function editPhoto(k,name,after,query){
   query=query||name;
   let cur=photos[k]||imgSrc(k.startsWith("capa-")?ED.capas[k.slice(5)]:ED.fotos[k]);
@@ -420,8 +446,8 @@ function editPhoto(k,name,after,query){
     ${cur?`<img class="ph" src="${esc(cur)}" alt="">`:""}
     <div class="linkrow"><input id="psearch" class="field" type="search" value="${esc(query)}" autocomplete="off" aria-label="Pesquisar fotos"><button class="btn" id="pgo">Buscar</button></div>
     <div class="pres" id="pres" aria-live="polite"></div>
-    <a class="btn sm" id="pgoogle" href="#" target="_blank" rel="noopener">abrir no google imagens ↗</a>
-    <div class="hint left" style="margin-top:8px">${GCX?"":"no google, toque e segure a foto, copie e volte aqui para colar."}</div>
+    <a class="btn sm" id="pgoogle" href="#" target="_blank" rel="noopener">abrir no bing imagens ↗</a>
+    <div class="hint left" style="margin-top:8px">para fotos do bing, toque e segure a foto lá, copie e volte aqui para colar.</div>
     <div class="acts" style="margin-top:6px"><button class="btn go" id="ppaste" style="flex:1">Colar</button><label class="btn" for="pfile">Galeria</label><input id="pfile" type="file" accept="image/*" hidden></div>
     <div class="linkrow" style="margin-top:8px"><input id="purl" class="field" type="text" inputmode="url" placeholder="Ou cole o link da imagem" autocomplete="off" autocapitalize="off"><button class="btn" id="pok">Usar</button></div>
     <div class="pmsg" id="pmsg" aria-live="polite"></div>
@@ -443,17 +469,21 @@ function editPhoto(k,name,after,query){
   document.addEventListener("paste",onPaste);
   $("#pfile").onchange=e=>{const f=e.target.files[0];if(f)setBlob(f)};
   $("#pok").onclick=()=>setLink($("#purl").value);
-  const gUrl=()=>"https://www.google.com/search?tbm=isch&q="+encodeURIComponent($("#psearch").value);
+  const gUrl=()=>"https://www.bing.com/images/search?q="+encodeURIComponent($("#psearch").value);
   $("#pgoogle").href=gUrl();$("#psearch").oninput=()=>$("#pgoogle").href=gUrl();
   const show=(list,src)=>{const box=$("#pres");
     box.innerHTML=list.length?list.map((x,i)=>`<button class="pick" data-i="${i}"><img src="${esc(x.thumb)}" alt="" loading="lazy"></button>`).join("")+`<div class="hint left">fotos: ${src}</div>`
       :`<div class="hint left">nada encontrado. tente outro nome.</div>`;
     box.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{const x=list[+b.dataset.i];setLink(x.full,x.thumb)})};
   const search=async()=>{const q=$("#psearch").value.trim();if(!q)return;$("#pres").innerHTML=`<div class="hint left">buscando fotos…</div>`;
-    const g=await googleImages(q).catch(()=>null);if(g&&g.length)return show(g,"google imagens");
-    try{const d=await (await fetch("https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=12&gsrsearch="+encodeURIComponent("filetype:bitmap "+q)+"&prop=imageinfo&iiprop=url&iiurlwidth=1000")).json();
-      show(Object.values((d.query||{}).pages||{}).sort((a,b)=>a.index-b.index).map(p=>(p.imageinfo||[])[0]).filter(x=>x&&x.thumburl).map(x=>({thumb:x.thumburl,full:x.thumburl})),"wikimedia")}
-    catch(e){$("#pres").innerHTML=`<div class="hint left">não consegui buscar agora. use o link do google abaixo.</div>`}};
+    const T=(u)=>Promise.race([fetch(u).then(r=>r.json()),new Promise((_,j)=>setTimeout(()=>j(0),7000))]);
+    const [ov,wm]=await Promise.allSettled([
+      T("https://api.openverse.org/v1/images/?page_size=14&mature=false&q="+encodeURIComponent(q)),
+      T("https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=10&gsrsearch="+encodeURIComponent("filetype:bitmap "+q)+"&prop=imageinfo&iiprop=url&iiurlwidth=1000")]);
+    const out=[];
+    if(ov.status==="fulfilled")(ov.value.results||[]).forEach(x=>{if(x.url&&x.thumbnail)out.push({thumb:x.thumbnail,full:x.url})});
+    if(wm.status==="fulfilled")Object.values((wm.value.query||{}).pages||{}).sort((a,b)=>a.index-b.index).map(p=>(p.imageinfo||[])[0]).filter(x=>x&&x.thumburl).forEach(x=>out.push({thumb:x.thumburl,full:x.thumburl}));
+    if(out.length)show(out,"openverse e wikimedia");else $("#pres").innerHTML=`<div class="hint left">nada encontrado ou sem conexão. use o link do bing abaixo.</div>`};
   $("#pgo").onclick=search;$("#psearch").onkeydown=e=>{if(e.key==="Enter")search()};search();
   $("#ppaste").onclick=async()=>{
     try{if(navigator.clipboard.read){for(const item of await navigator.clipboard.read()){const tp=item.types.find(t=>t.startsWith("image/"));if(tp){setBlob(await item.getType(tp));return}}}}catch(e){}
@@ -464,79 +494,296 @@ function editPhoto(k,name,after,query){
   if(cur)$("#pdel").onclick=async()=>{dropLocal();await saveOps([opFor(k,null)]);close()};
 }
 
-async function parseVideo(raw){
-  const u=((raw||"").match(/https?:\/\/[^\s"'<>]+/)||[""])[0].replace(/[).,]+$/,"");
-  if(!u)return {err:"Não encontrei um link. Copie o link do vídeo no app e cole aqui."};
-  let m=u.match(/instagram\.com\/(?:[^/?#]+\/)?(?:reel|reels|p|tv)\/([\w-]+)/);if(m)return {v:["ig",m[1]]};
-  if(!/tiktok\.com/.test(u))return {err:"Esse link não é do TikTok nem do Instagram."};
-  m=u.match(/\/(?:video|photo)\/(\d{8,})/);let title="";
-  try{const r=await fetch("https://www.tiktok.com/oembed?url="+encodeURIComponent(u));const j=await r.json();
-    title=j.author_name?"@"+j.author_name:"";if(!m){const x=(j.html||"").match(/data-video-id="(\d+)"/)||(j.embed_product_id?[0,j.embed_product_id]:null);if(x)m=[0,x[1]]}}catch(e){}
-  if(m)return {v:["tt",m[1]],title};
-  return {v:["tl",u],title:"",note:"Link curto: o vídeo vai abrir no app do TikTok."}}
-/* Guia do lugar: vídeos, photo spots, poses e notas */
-const KINDS=[["videos","Vídeos"],["spots","Spots"],["poses","Poses"],["notas","Notas"]];
-function guideData(c,it,k){
-  const base=(typeof GUIA!=="undefined"&&GUIA[c.id+"|"+it.n])||{},hid=ED.ocultos[k]||[],ex=ED.guia[k]||{};
-  const pick=kind=>[...(base[kind]||[]).map((x,i)=>({...x,id:"b"+kind[0]+i})),...(ex[kind]||[])].filter(x=>!hid.includes(x.id));
-  return {videos:vidsOf(k,it),spots:pick("spots"),poses:pick("poses"),notas:pick("notas")}}
-const gCount=g=>g.videos.length+g.spots.length+g.poses.length+g.notas.length;
+/* ===== ícones monocromáticos ===== */
+const IC={
+ pin:'<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
+ cam:'<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" transform="translate(1 0) scale(.92)"/><circle cx="12.5" cy="13" r="3.6"/>',
+ tiktok:'<path d="M15.5 3v10.2a4.2 4.2 0 1 1-4.2-4.2"/><path d="M15.5 3c.3 2.6 1.9 4.2 4.5 4.4"/>',
+ reel:'<rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><path d="M3.5 9h17M9 3.5l3 5.5M14.5 3.5l3 5.5"/><path d="M10.5 12.5v5l4.5-2.5z"/>',
+ youtube:'<path d="M3 8a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3z"/><path d="M10 9.5v5l4.5-2.5z"/>',
+ pose:'<circle cx="12" cy="5" r="2"/><path d="M12 7.5V14M12 9.5l-4.5 2.5M12 9.5l4.5-3.5M12 14l-3 6M12 14l3 6"/>',
+ dica:'<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.7.5 1 1.2 1 2.1h5c0-.9.3-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
+ nota:'<path d="M5 4h14v10l-6 6H5z"/><path d="M13 20v-6h6M8 9h8"/>',
+ img:'<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l5-4.5 4 3.5 3-2.5 4 3.5"/>',
+ blog:'<path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+ site:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+ ticket:'<path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4z"/><path d="M14 7v10" stroke-dasharray="2 2"/>',
+ cal:'<path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"/><path d="M9 15l2 2 4-4"/>',
+ airbnb:'<path d="M12 3.5c-.9 0-1.6.5-2.2 1.6L4.6 15.4c-.8 1.6-1.2 2.6-1.2 3.5 0 1.4 1 2.4 2.5 2.4 1.1 0 2.2-.7 4-2.8.5-.6 1.1-.6 1.6 0 1.8 2.1 2.9 2.8 4 2.8 1.5 0 2.5-1 2.5-2.4 0-.9-.4-1.9-1.2-3.5L14.2 5.1c-.6-1.1-1.3-1.6-2.2-1.6z"/><path d="M12 10c-.9 1.2-1.6 2.3-1.6 3.2a1.6 1.6 0 0 0 3.2 0C13.6 12.3 12.9 11.2 12 10z"/>',
+ x:'<path d="M6 6l12 12M18 6L6 18"/>',
+ back:'<path d="M15 5l-7 7 7 7"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',
+ nav:'<path d="M3 11l18-8-8 18-2-8z"/>',
+ copy:'<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/>'};
+const ico=(n,s=18)=>`<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]||""}</svg>`;
+const TYPES={video:{l:"vídeo",i:"reel"},spot:{l:"spot",i:"pin"},pose:{l:"pose",i:"pose"},dica:{l:"dica",i:"dica"},nota:{l:"nota",i:"nota"},
+  print:{l:"print",i:"img"},blog:{l:"blog",i:"blog"},site:{l:"site",i:"site"},ingresso:{l:"ingresso",i:"ticket"},reserva:{l:"reserva",i:"cal"}};
+const ORDER=Object.keys(TYPES);
+const PLAT={tt:"tiktok",tl:"tiktok",ig:"reels",yt:"youtube"};
+const typeIcon=x=>x.type==="video"?(x.plat==="tt"||x.plat==="tl"?"tiktok":x.plat==="yt"?"youtube":"reel"):x.type==="spot"?(x.p?"pin":"cam"):TYPES[x.type].i;
+const enc=encodeURIComponent;
+const hostOf=u=>{try{return new URL(u).hostname.replace(/^www\./,"")}catch(e){return ""}};
+const copyTxt=t=>{(navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("copiado")).catch(()=>toast("não consegui copiar"))};
+
+/* ===== reconhecimento automático de links ===== */
+function parseMapsLink(u){
+  const m=u.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)||u.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)||u.match(/[?&](?:q|ll|query|destination|center)=(-?\d+\.\d+)(?:,|%2C)(-?\d+\.\d+)/i);
+  return m?[+m[1],+m[2]]:parseCoords(u)}
+function detect(raw){
+  const u=((raw||"").match(/https?:\/\/[^\s"'<>]+/)||[""])[0].replace(/[).,]+$/,"");if(!u)return null;
+  const h=hostOf(u).replace(/^m\./,"");if(!h||!h.includes("."))return null;let m;
+  if(/(^|\.)instagram\.com$/.test(h)){m=u.match(/\/(?:reel|reels|p|tv)\/([\w-]+)/);return m?{type:"video",plat:"ig",vid:m[1],url:u}:{type:"site",url:u}}
+  if(/(^|\.)tiktok\.com$/.test(h)){m=u.match(/\/(?:video|photo)\/(\d{8,})/);return m?{type:"video",plat:"tt",vid:m[1],url:u}:{type:"video",plat:"tl",vid:u,url:u}}
+  if(/(^|\.)youtube\.com$|^youtu\.be$/.test(h)){m=u.match(/[?&]v=([\w-]{11})/)||u.match(/youtu\.be\/([\w-]{11})/)||u.match(/\/(?:shorts|embed|live)\/([\w-]{11})/);return m?{type:"video",plat:"yt",vid:m[1],url:u}:{type:"site",url:u}}
+  if(/google\.[a-z.]+\/maps|^maps\.google\.|maps\.app\.goo\.gl|goo\.gl\/maps/.test(h+u)){const pl=u.match(/\/place\/([^/@?]+)/);return {type:"spot",url:u,p:parseMapsLink(u),title:pl?decodeURIComponent(pl[1].replace(/\+/g," ")):""}}
+  if(/\.(jpe?g|png|webp|gif)(\?|$)/i.test(u))return {type:"print",img:u};
+  if(/klook|kkday|tiqets|viator|getyourguide|ticket|ingress/.test(h))return {type:"ingresso",url:u};
+  if(/tablecheck|tabelog|opentable|airbnb|booking\.com|hotels?\.|reserv/.test(h))return {type:"reserva",url:u};
+  if(/medium\.com|blogspot|wordpress|substack|tistory|note\.com|hatenablog|ameblo|blog/.test(h))return {type:"blog",url:u};
+  return {type:"site",url:u}}
+async function fetchMeta(d){
+  const T=u=>Promise.race([fetch(u).then(r=>r.json()),new Promise((_,j)=>setTimeout(j,4000))]);
+  try{
+    if(d.plat==="yt"){const j=await T("https://www.youtube.com/oembed?format=json&url="+enc(d.url));return {title:j.title,img:"https://i.ytimg.com/vi/"+d.vid+"/hqdefault.jpg"}}
+    if(d.plat==="tt"||d.plat==="tl"){const j=await T("https://www.tiktok.com/oembed?url="+enc(d.url));const o={title:j.author_name?"@"+j.author_name:"",desc:j.title};
+      const x=(j.html||"").match(/data-video-id="(\d+)"/);if(d.plat==="tl"&&x){o.plat="tt";o.vid=x[1]}return o}
+  }catch(e){}
+  return d.plat==="yt"?{img:"https://i.ytimg.com/vi/"+d.vid+"/hqdefault.jpg"}:{}}
+
 const mapsAt=p=>`https://www.google.com/maps/search/?api=1&query=${p[0]},${p[1]}`;
 function parseCoords(u){if(!u)return null;const m=u.match(/(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);return m?[+m[1],+m[2]]:null}
-function guide(c,it,k,name,startTab){
-  let g=guideData(c,it,k),tab=startTab||(KINDS.find(([id])=>g[id].length)||KINDS[0])[0],playing=null;
-  const ed=()=>view.edit;
-  const rm=(kind,id)=>ed()?`<button class="gx" data-gdel="${kind}:${id}" aria-label="Remover">Remover</button>`:"";
-  const empty=()=>`<p class="empty">Nada aqui ainda.${ed()?"":" Toque no lápis para adicionar."}</p>`;
-  const img=x=>imgSrc(x.img)?`<img class="ph" src="${esc(imgSrc(x.img))}" alt="" loading="lazy">`:"";
-  function body(){
-    const L=g[tab];let h="";
-    if(tab==="videos"){
-      h=L.length?`<div class="vids">${L.map(([p,id,title])=>{const url=p==="tt"?`https://www.tiktok.com/@/video/${id}`:`https://www.instagram.com/reel/${id}/`;
-        if(p==="tl")return `<div class="vslide"><a class="vtile tt" href="${esc(id)}" target="_blank" rel="noopener"><span class="plat">TikTok</span><span class="play" aria-hidden="true"></span><span class="vt">${esc(title||"Abrir no app")}</span></a><div class="pact"><a href="${esc(id)}" target="_blank" rel="noopener">Abrir no app ↗</a>${ed()?`<button class="gx" data-vdel="${esc(id)}">Remover</button>`:""}</div></div>`;
-        const inner=playing===id?`<div class="player ${p}"><iframe src="${p==="tt"?`https://www.tiktok.com/player/v1/${id}?description=0&music_info=0&rel=0`:`https://www.instagram.com/reel/${id}/embed`}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen title="${esc(title||"")}"></iframe></div>`
-          :`<button class="vtile ${p}" data-play="${id}"><span class="plat">${p==="tt"?"TikTok":"Reels"}</span><span class="play" aria-hidden="true"></span><span class="vt">${esc(title||"")}</span></button>`;
-        return `<div class="vslide">${inner}<div class="pact"><a href="${url}" target="_blank" rel="noopener">Abrir no app ↗</a>${ed()?`<button class="gx" data-vdel="${id}">Remover</button>`:""}</div></div>`}).join("")}</div>${L.length>1?`<div class="hint left">Arraste para o lado para ver os outros.</div>`:""}`:empty();
-      if(ed())h+=`<div class="gform"><div class="linkrow"><input id="gurl" class="field" type="text" placeholder="Link do TikTok ou do Reels" autocomplete="off" autocapitalize="off"><button class="btn" id="gpaste">Colar</button></div>
-        <input id="gtit" class="field" type="text" placeholder="Título curto (opcional)" autocomplete="off"><button class="btn go" id="gadd">Adicionar vídeo</button></div>`;
-    }else{
-      h=L.length?L.map(x=>`<div class="gcard">${img(x)}<p>${esc(x.t)}</p>${x.p?`<a class="maplink" href="${mapsAt(x.p)}" target="_blank" rel="noopener">Abrir no mapa ↗</a>`:""}${rm(tab,x.id)}</div>`).join(""):empty();
-      if(ed())h+=`<div class="gform"><textarea id="gtxt" class="field area" rows="3" placeholder="${tab==="spots"?"Onde fica o melhor ângulo":tab==="poses"?"Descreva a pose":"Escreva a nota"}"></textarea>
-        ${tab!=="notas"?`<input id="gimg" class="field" type="url" inputmode="url" placeholder="Link de uma imagem de referência (opcional)" autocomplete="off">
-        ${canShare()?`<label class="btn sm" for="gfile">Ou escolher imagem da galeria</label><input id="gfile" type="file" accept="image/*" hidden>`:""}`:""}
-        ${tab==="spots"?`<input id="gpos" class="field" type="text" placeholder="Coordenadas ou link do Google Maps (opcional)" autocomplete="off">`:""}
-        <button class="btn go" id="gadd">Adicionar</button></div>`;
-    }
-    return h+`<div class="pmsg" id="pmsg" aria-live="polite"></div>`}
-  const draw=()=>`<div class="eyebrow">Guia do lugar</div><h3>${esc(name)}</h3>${it.ja?`<div class="jn ja muted">${esc(it.ja)}</div>`:""}
-    <div class="seg gtabs">${KINDS.map(([id,l])=>`<button data-tab="${id}" aria-pressed="${tab===id}">${l}${g[id].length?`<span class="cnt">${g[id].length}</span>`:""}</button>`).join("")}</div>
-    <div class="gbody">${body()}</div>
-    <div class="acts"><button class="btn" id="pclose" style="margin-left:auto">Fechar</button></div>`;
-  const close=sheet(draw(),city);
-  let fileBlob=null;
-  const redraw=()=>{g=guideData(c,it,k);$(".sheet").innerHTML=draw();bind()};
-  const msg=t=>$("#pmsg").textContent=t;
-  function bind(){
-    $("#pclose").onclick=close;
-    document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{tab=b.dataset.tab;playing=null;redraw()});
-    document.querySelectorAll("[data-play]").forEach(b=>b.onclick=()=>{playing=b.dataset.play;redraw()});
-    document.querySelectorAll("[data-vdel]").forEach(b=>b.onclick=async()=>{await saveOps([{t:"vid-",k,id:b.dataset.vdel}]);redraw()});
-    document.querySelectorAll("[data-gdel]").forEach(b=>b.onclick=async()=>{const [kind,id]=b.dataset.gdel.split(":");await saveOps([{t:"g-",k,kind,id}]);redraw()});
-    const f=$("#gfile");if(f)f.onchange=e=>{fileBlob=e.target.files[0]||null;if(fileBlob)msg("Imagem escolhida: "+fileBlob.name)};
-    const gp=$("#gpaste");if(gp)gp.onclick=async()=>{try{$("#gurl").value=await navigator.clipboard.readText()}catch(e){msg("O navegador não liberou a área de transferência. Toque e segure no campo e escolha Colar.")}};
-    const add=$("#gadd");if(!add)return;
-    add.onclick=async()=>{
-      if(tab==="videos"){const u=$("#gurl").value;if(!u.trim())return;msg("Lendo o link…");const r=await parseVideo(u);if(r.err)return msg(r.err);
-        await saveOps([{t:"vid+",k,v:[...r.v,$("#gtit").value.trim()||r.title||(r.v[0]==="ig"?"Reels":"TikTok")]}]);redraw();if(r.note)toast(r.note);return}
-      const t=$("#gtxt").value.trim();if(!t)return msg("Escreva um texto curto.");
-      const v={id:"e"+Date.now().toString(36),t};
-      const il=$("#gimg")&&$("#gimg").value.trim();if(il){if(!/^https?:\/\//.test(il))return msg("O link da imagem precisa começar com http.");v.img=il}
-      if(fileBlob&&canShare()){msg("Enviando a imagem…");try{v.img=await uploadFb(fileBlob)}catch(e){return msg("Não consegui enviar a imagem.")}}
-      const pos=$("#gpos")&&parseCoords($("#gpos").value);if(pos)v.p=pos;
-      await saveOps([{t:"g+",k,kind:tab,v}]);fileBlob=null;redraw()};
-  }
-  bind();
+/* ===== dados do guia (tudo vira uma lista de mídias) ===== */
+function guideData(c,it,k){
+  const base=(typeof GUIA!=="undefined"&&GUIA[c.id+"|"+it.n])||{},hid=ED.ocultos[k]||[],ex=ED.guia[k]||{},out=[];
+  const old=(kind,type)=>{
+    (base[kind]||[]).forEach((x,i)=>out.push({id:"b"+kind[0]+i,type,text:x.t,p:x.p,img:x.img,kind,src:"base"}));
+    (ex[kind]||[]).forEach(x=>out.push({id:x.id,type,text:x.t,p:x.p,img:x.img,kind,src:"ed"}))};
+  old("spots","spot");old("poses","pose");old("notas","nota");
+  vidsOf(k,it).forEach(([p,id,title])=>out.push({id,type:"video",plat:p==="tt"?"tt":p==="tl"?"tl":"ig",vid:id,
+    url:p==="tt"?`https://www.tiktok.com/@/video/${id}`:p==="tl"?id:`https://www.instagram.com/reel/${id}/`,title,src:"vid"}));
+  (ex.itens||[]).forEach(x=>out.push({...x,kind:"itens",src:"ed"}));
+  (it.links||[]).forEach(([l,u],i)=>{const d=detect(u)||{type:"site"};const ty=/ingress|ticket/i.test(l)?"ingresso":/reserv/i.test(l)?"reserva":d.type;
+    out.push({id:"l"+i,type:ty,title:l,url:u,price:ty==="ingresso"?it.fee:undefined,src:"base",kind:"links"})});
+  return out.filter(x=>!hid.includes(x.id))}
+const gCount=a=>a.length;
+const removeItem=(k,x)=>x.src==="vid"?saveOps([{t:"vid-",k,id:x.id}]):saveOps([{t:"g-",k,kind:x.kind,id:x.id}]);
+
+/* ===== camadas extras (mapa, rota, hospedagem) ===== */
+function sheet2(html,onClose){const o=$("#ov2");o.innerHTML=`<div class="sheet" role="document">${html}</div>`;o.hidden=false;
+  const close=()=>{o.hidden=true;o.innerHTML="";onClose&&onClose()};o.onclick=e=>{if(e.target===o)close()};o.scrollTop=0;return close}
+const idle=()=>$("#jaov").hidden&&$("#ov2").hidden;
+let HOSP={},unsubH=null;
+const hosp=c=>(c&&HOSP[c.id])||{};
+const hospAddr=c=>hosp(c).endereco||(c&&c.id===(view.city&&view.city.id)?addr():"")||(c&&c.home&&c.home.q)||"";
+const placeQ=(c,it)=>it.qq||(it.home?hospAddr(c):(it.q||`${it.n||it.title||""}, ${c.area}`));
+function prevStop(day,i){for(let j=i-1;j>=0;j--){const x=day.items[j];if(x.n||x.home)return x}return day.start?{home:1}:null}
+const embedURL=o=>{const b="https://maps.google.com/maps?hl=pt-BR&output=embed";
+  return o.d?`${b}&saddr=${enc(o.s||"")}&daddr=${enc(o.d)}&dirflg=${o.m}`:`${b}&q=${enc(o.q)}&z=16`};
+const dirURL=(s,d,m)=>`https://www.google.com/maps/dir/?api=1${s?`&origin=${enc(s)}`:""}&destination=${enc(d)}&travelmode=${{r:"transit",w:"walking",d:"driving"}[m]}`;
+
+function mapSheet(title,q,p){
+  const close=sheet2(`<div class="gh"><div><div class="eyebrow">mapa</div><h3>${esc(title)}</h3></div><button class="iconbtn" id="mx" aria-label="fechar">${ico("x",20)}</button></div>
+    <iframe class="mapframe" src="${embedURL({q:p?p.join(","):q})}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="mapa"></iframe>
+    <div class="acts" style="flex-wrap:wrap"><a class="btn sm" href="https://www.google.com/maps/search/?api=1&query=${enc(p?p.join(","):q)}" target="_blank" rel="noopener">abrir no app do google maps ↗</a></div>`);
+  $("#mx").onclick=close}
+
+function routeSheet(c,it,prev){
+  const label=it.home?c.home.n:(it.n||it.title||"destino"),dest=placeQ(c,it);
+  let mode=it.leg?(it.leg.m==="w"?"w":it.leg.m==="tour"?"d":"r"):"r";
+  const opts=[];
+  if(prev)opts.push({k:"prev",l:prev.home?c.home.n:(prev.n||prev.title),q:placeQ(c,prev)});
+  if(!(prev&&prev.home)&&!it.home&&hospAddr(c))opts.push({k:"home",l:c.home.n,q:hospAddr(c)});
+  opts.push({k:"gps",l:"minha localização",q:""});
+  let org=opts[0];
+  const close=sheet2("<div id=\"rbox\"></div>");
+  const draw=()=>{
+    const ready=org.k!=="gps"||org.q;
+    $("#rbox").innerHTML=`<div class="gh"><div><div class="eyebrow">rota</div><h3>${esc(label)}</h3></div><button class="iconbtn" id="rx" aria-label="fechar">${ico("x",20)}</button></div>
+     <div class="seg" style="margin-top:14px">${[["r","transporte"],["w","a pé"],["d","carro"]].map(([v,l])=>`<button data-m="${v}" aria-pressed="${mode===v}">${l}</button>`).join("")}</div>
+     <div class="gchips" style="margin:12px 0 0"><span class="muted" style="align-self:center;font-size:13px">saindo de</span>${opts.map(o=>`<button class="gchip" data-o="${o.k}" aria-pressed="${org.k===o.k}">${esc(o.l)}</button>`).join("")}</div>
+     ${it.leg?`<div class="ficha"><div class="fr"><span>no seu roteiro</span><div>${legBody(it.leg)}</div></div></div>`:""}
+     ${ready?`<iframe class="mapframe" src="${embedURL({s:org.q,d:dest,m:mode})}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="rota"></iframe>`:`<div class="mapframe wait">buscando sua localização…</div>`}
+     <div class="hint left" style="margin-top:8px">o google mostra as linhas, os horários e os valores de agora.</div>
+     <div class="acts" style="flex-wrap:wrap"><a class="btn sm" href="${dirURL(org.q,dest,mode)}" target="_blank" rel="noopener">abrir no app do google maps ↗</a></div>`;
+    $("#rx").onclick=close;
+    document.querySelectorAll("#rbox [data-m]").forEach(b=>b.onclick=()=>{mode=b.dataset.m;draw()});
+    document.querySelectorAll("#rbox [data-o]").forEach(b=>b.onclick=()=>{const o=opts.find(x=>x.k===b.dataset.o);org=o;draw();
+      if(o.k==="gps"&&!o.q){if(!navigator.geolocation){toast("este aparelho não informa a localização");org=opts[0];draw();return}
+        navigator.geolocation.getCurrentPosition(p=>{o.q=`${p.coords.latitude},${p.coords.longitude}`;if(org===o)draw()},()=>{toast("não consegui sua localização");org=opts[0];draw()},{timeout:9000,maximumAge:60000})}})};
+  draw();
+  if(org.k==="gps"){navigator.geolocation&&navigator.geolocation.getCurrentPosition(p=>{org.q=`${p.coords.latitude},${p.coords.longitude}`;draw()},()=>{toast("não consegui sua localização")},{timeout:9000})}
 }
+
+const HF=c=>[["endereco","endereço","area"],["ja","endereço em "+(c.lang||"idioma local"),"area"],["checkin","check-in",""],["checkout","check-out",""],["anfitriao","anfitrião",""],
+  ["tel","telefone do anfitrião","tel"],["codigo","código ou senha de acesso","secret"],["wifi","wi-fi, rede e senha",""],["link","link da reserva","url"],["obs","observações","area"]];
+function hospSheet(c){
+  let editing=false;
+  const close=sheet2("<div id=\"hbox\"></div>");
+  const head=`<div class="gh"><div><div class="eyebrow">${ico("airbnb",15)} hospedagem</div><h3>${esc(c.name)}</h3></div><button class="iconbtn" id="hx" aria-label="fechar">${ico("x",20)}</button></div>`;
+  const draw=()=>{
+    const b=$("#hbox");
+    if(!FB){b.innerHTML=head+`<p class="empty">sem conexão com o firebase agora.</p>`;$("#hx").onclick=close;return}
+    if(!(USER&&ROLE.editor)){
+      b.innerHTML=head+`<p class="gvtext" style="margin:14px 0">os dados da hospedagem (endereço, anfitrião, senhas) só aparecem para quem está na conta do grupo.</p>
+        <div class="acts"><button class="btn go" id="hlogin">entrar na conta</button></div>`;
+      $("#hx").onclick=close;$("#hlogin").onclick=()=>{close();settings()};return}
+    const d=hosp(c),fields=HF(c),has=fields.some(([k])=>d[k]);
+    if(editing||!has){
+      b.innerHTML=head+`<div class="frm">${fields.map(([k,l,t])=>t==="area"?`<label class="lbl2">${esc(l)}<textarea class="field area" rows="2" data-f="${k}">${esc(d[k]||"")}</textarea></label>`
+        :`<label class="lbl2">${esc(l)}<input class="field" data-f="${k}" type="text" value="${esc(d[k]||"")}" autocomplete="off" ${t==="secret"?'autocapitalize="off"':""}></label>`).join("")}</div>
+        <div class="acts"><button class="btn" id="hcancel">${has?"cancelar":"fechar"}</button><button class="btn go" id="hsave" style="margin-left:auto">salvar</button></div>
+        <div class="hint">guardado só no firebase, visível para quem está na lista do grupo.</div>`;
+      $("#hx").onclick=close;$("#hcancel").onclick=()=>{if(has){editing=false;draw()}else close()};
+      $("#hsave").onclick=async()=>{const vals={};document.querySelectorAll("#hbox [data-f]").forEach(el=>vals[el.dataset.f]=el.value.trim());
+        try{await FB.db.doc("hospedagens/"+c.id).set(vals,{merge:true});HOSP[c.id]={...d,...vals};toast("hospedagem salva.");editing=false;draw()}catch(e){toast("não consegui salvar. confira as regras do firebase.")}};
+      return}
+    b.innerHTML=head+`<div class="ficha">${fields.filter(([k])=>d[k]).map(([k,l,t])=>`<div class="fr h"><span>${esc(l)}</span>
+      <div class="${t==="secret"?"secret":""}" data-v="${k}">${t==="secret"?"••••••":t==="url"?`<a href="${esc(d[k])}" target="_blank" rel="noopener">abrir ↗</a>`:esc(d[k])}</div>
+      <div class="hbtns">${t==="secret"?`<button class="gx" data-show="${k}">mostrar</button>`:""}${t==="url"?"":`<button class="gx" data-cp="${k}" aria-label="copiar">${ico("copy",15)}</button>`}${t==="tel"?`<a class="gx" href="tel:${esc(d[k].replace(/[^\d+]/g,""))}">ligar</a>`:""}</div></div>`).join("")}</div>
+      <div class="acts" style="flex-wrap:wrap"><button class="btn go" id="hgo">${ico("nav",16)} ir</button>${d.ja||d.endereco?`<button class="btn" id="hja">${esc(c.lang||"local")}</button>`:""}<button class="btn" id="hedit">editar</button></div>`;
+    $("#hx").onclick=close;
+    document.querySelectorAll("#hbox [data-cp]").forEach(x=>x.onclick=()=>copyTxt(d[x.dataset.cp]));
+    document.querySelectorAll("#hbox [data-show]").forEach(x=>x.onclick=()=>{const v=document.querySelector(`#hbox [data-v="${x.dataset.show}"]`);const sh=x.dataset.on!=="1";x.dataset.on=sh?"1":"";v.textContent=sh?d[x.dataset.show]:"••••••";x.textContent=sh?"ocultar":"mostrar"});
+    $("#hedit").onclick=()=>{editing=true;draw()};
+    $("#hgo").onclick=()=>{close();routeSheet(c,{home:1},null)};
+    $("#hja").onclick=()=>{const o=$("#jaov");o.className="jaov";o.innerHTML=`<div><div class="big">${esc(d.ja||d.endereco||"")}</div><div class="small">${esc(c.home.n)}</div><button class="btn close" id="jac">Fechar</button></div>`;o.hidden=false;o.onclick=()=>{o.hidden=true}}};
+  draw()}
+
+/* ===== guia do lugar, no formato de explorar ===== */
+function guide(c,it,k,name){
+  let list=guideData(c,it,k),filter="todos",group=false,st={m:"grid"},pasteH=null,form={};
+  const setPaste=h=>{if(pasteH)document.removeEventListener("paste",pasteH);pasteH=h;if(h)document.addEventListener("paste",h)};
+  const closeSheet=sheet(`<div id="gbox"></div>`,()=>{setPaste(null);city()});
+  const box=()=>$("#gbox"),back=m=>{st={m};render()};
+  const shortTitle=x=>{if(x.title)return x.title;const t=(x.text||"").replace(/\s+/g," ").trim();if(!t)return TYPES[x.type].l;const s=t.split(/[.!?]\s/)[0];return s.length>56?s.slice(0,54).trim()+"…":s};
+  const head=(left,eyebrow,title,sub)=>`<div class="gh">${left||""}<div style="flex:1;min-width:0"><div class="eyebrow">${eyebrow}</div><h3>${title}</h3>${sub||""}</div><button class="iconbtn" id="gx" aria-label="fechar">${ico("x",20)}</button></div>`;
+  const ficha=()=>{const rows=[],hor=[it.time,it.info].filter(Boolean).join(", ");
+    if(hor)rows.push(["horário",esc(hor)]);if(it.fee)rows.push(["ingresso",esc(it.fee)]);
+    if(it.leg)rows.push([it.leg.m==="t"?"como chegar":"deslocamento",legBody(it.leg)]);if(it.note)rows.push(["nota",esc(it.note)]);
+    return rows.length?`<div class="ficha">${rows.map(([l,v])=>`<div class="fr"><span>${l}</span><div>${v}</div></div>`).join("")}</div>`:""};
+
+  function gridView(){
+    const counts={};list.forEach(x=>counts[x.type]=(counts[x.type]||0)+1);
+    const types=ORDER.filter(t=>counts[t]);if(filter!=="todos"&&!counts[filter])filter="todos";
+    let shown=(filter==="todos"?list:list.filter(x=>x.type===filter)).slice().sort((a,b)=>(b.at||0)-(a.at||0));
+    if(group)shown.sort((a,b)=>ORDER.indexOf(a.type)-ORDER.indexOf(b.type));
+    const tile=(x,i)=>{const img=imgSrc(x.img),big=i===0&&shown.length>=5&&filter==="todos"&&!group;
+      return `<button class="gt${big?" big":""}${img?" hasimg":""}" data-gi="${esc(x.id)}">${img?`<img src="${esc(img)}" alt="" loading="lazy" onerror="this.remove()">`:""}
+        ${img?`<span class="gbadge">${ico(typeIcon(x),14)}</span>`:`<span class="gglyph">${ico(typeIcon(x),big?38:26)}</span>`}<span class="gtxt">${esc(shortTitle(x))}</span></button>`};
+    return head("","guia do lugar",esc(name),it.ja?`<div class="jn ja muted">${esc(it.ja)}</div>`:"")+ficha()+
+      (list.length?`<div class="gchips"><button class="gchip" aria-pressed="${filter==="todos"}" data-gf="todos">todos <i>${list.length}</i></button>
+        ${types.map(t=>`<button class="gchip" aria-pressed="${filter===t}" data-gf="${t}">${ico(TYPES[t].i,14)} ${TYPES[t].l} <i>${counts[t]}</i></button>`).join("")}
+        <button class="gchip" aria-pressed="${group}" data-grp>agrupar por tipo</button></div>
+        <div class="ggrid">${shown.map(tile).join("")}</div>`
+      :`<div class="gempty">${ico("pin",30)}<p>o guia está vazio.</p><p class="muted">toque no + para guardar reels, spots com coordenadas, poses, dicas, prints e links úteis.</p></div>`)+
+      `<button class="gfab" id="gadd" aria-label="adicionar">${ico("plus",26)}</button>`}
+
+  function viewer(x){
+    const img=imgSrc(x.img);let media="";
+    if(x.type==="video"){
+      if(x.plat==="tt")media=`<div class="gm tt"><iframe src="https://www.tiktok.com/player/v1/${x.vid}?description=0&music_info=0&rel=0" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen title="${esc(shortTitle(x))}"></iframe></div>`;
+      else if(x.plat==="ig")media=`<div class="gm ig"><iframe src="https://www.instagram.com/reel/${x.vid}/embed" allowfullscreen title="${esc(shortTitle(x))}"></iframe></div>`;
+      else if(x.plat==="yt")media=`<div class="gm yt"><iframe src="https://www.youtube.com/embed/${x.vid}?rel=0&playsinline=1" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen title="${esc(shortTitle(x))}"></iframe></div>`;
+      else media=`<a class="gm open" href="${esc(x.url)}" target="_blank" rel="noopener">${ico("tiktok",40)}<span>abrir no tiktok</span></a>`}
+    else if(img)media=`<img class="gvimg" src="${esc(img)}" alt="">`;
+    const acts=[];
+    if(x.type==="spot"){acts.push(x.p?`<button class="btn go" data-gmap>${ico("pin",16)} ver no mapa</button><button class="btn" data-groute>${ico("nav",16)} rota até aqui</button>`:`<button class="btn" data-gmap>${ico("pin",16)} procurar no mapa</button>`)}
+    if(x.url&&x.type!=="spot"&&x.plat!=="tl")acts.push(`<a class="btn ${x.type==="video"?"":"go"}" href="${esc(x.url)}" target="_blank" rel="noopener">${x.type==="video"?"abrir no app":"abrir "+TYPES[x.type].l} ↗</a>`);
+    if(x.url&&x.type==="spot")acts.push(`<a class="btn sm" href="${esc(x.url)}" target="_blank" rel="noopener">link original ↗</a>`);
+    return head(`<button class="iconbtn" id="gback" aria-label="voltar">${ico("back",20)}</button>`,"guia do lugar",esc(name))+media+
+     `<div class="gvinfo"><div class="gvtype">${ico(typeIcon(x),16)} ${TYPES[x.type].l}${x.type==="video"?`<span class="muted"> ${PLAT[x.plat]||""}</span>`:""}</div>
+       ${x.title?`<h4>${esc(x.title)}</h4>`:""}${x.text?`<p class="gvtext">${esc(x.text)}</p>`:""}${x.price?`<div class="gvprice">${esc(x.price)}</div>`:""}
+       ${x.p?`<div class="coords"><span>${x.p[0].toFixed(5)}, ${x.p[1].toFixed(5)}</span><button class="gx" id="gcp">copiar</button></div>`:""}
+       ${x.url&&!acts.length?"":x.url?`<div class="muted" style="font-size:13px;margin-top:8px">${esc(hostOf(x.url))}</div>`:""}</div>
+      <div class="acts" style="flex-wrap:wrap">${acts.join("")}</div><button class="gx" id="grem" style="margin-top:16px">remover do guia</button>`}
+
+  function pickView(){
+    return head(`<button class="iconbtn" id="gback" aria-label="voltar">${ico("back",20)}</button>`,"adicionar ao guia","o que você quer guardar?")+
+     `<div class="linkrow" style="margin-top:14px"><input id="aurl" class="field" type="text" placeholder="cole um link: tiktok, reels, youtube, maps…" autocomplete="off" autocapitalize="off"><button class="btn" id="apaste">colar</button></div>
+      <div class="hint left" style="margin-top:6px">o tipo é reconhecido sozinho. você também pode colar um print.</div><div class="pmsg" id="pmsg"></div>
+      <div class="tgrid">${ORDER.map(t=>`<button class="tbtn" data-ty="${t}">${ico(TYPES[t].i,24)}<span>${TYPES[t].l}</span></button>`).join("")}</div>`}
+
+  function formView(){
+    const f=form,t=f.type,needUrl=["video","blog","site","ingresso","reserva"].includes(t),hasImg=["print","pose","spot","dica","blog"].includes(t),
+      ph={nota:"escreva a nota",dica:"qual é a dica?",pose:"descreva a pose e o enquadramento",spot:"onde fica o melhor ângulo?",reserva:"horário, código da reserva…",ingresso:"onde comprar, horário…"}[t]||"observação (opcional)";
+    return head(`<button class="iconbtn" id="gback" aria-label="voltar">${ico("back",20)}</button>`,"adicionar ao guia",TYPES[t].l)+
+     `<div class="gchips" style="margin:12px 0 4px">${ORDER.map(o=>`<button class="gchip" aria-pressed="${t===o}" data-ft="${o}">${ico(TYPES[o].i,14)} ${TYPES[o].l}</button>`).join("")}</div>
+      <div class="frm">
+       ${needUrl||t==="spot"?`<input id="f_url" class="field" type="text" placeholder="${t==="spot"?"link do google maps (opcional)":"link"}" value="${esc(f.url||"")}" autocomplete="off" autocapitalize="off">`:""}
+       <input id="f_title" class="field" type="text" placeholder="título${t==="video"||t==="spot"?" (opcional, eu tento descobrir)":" (opcional)"}" value="${esc(f.title||"")}" autocomplete="off">
+       ${t==="spot"?`<input id="f_p" class="field" type="text" placeholder="coordenadas, ex: 35.6595, 139.7005" value="${f.p?esc(Array.isArray(f.p)?f.p.join(", "):f.p):""}" autocomplete="off"><div class="acts" style="margin:0"><button class="btn sm" id="f_gps">${ico("pin",15)} usar minha localização</button></div><div class="hint left" id="f_pinfo" style="margin:0"></div>`:""}
+       ${t==="ingresso"?`<input id="f_price" class="field" type="text" placeholder="valor, ex: ¥3.400" value="${esc(f.price||"")}" autocomplete="off">`:""}
+       <textarea id="f_text" class="field area" rows="3" placeholder="${ph}">${esc(f.text||"")}</textarea>
+       ${hasImg?`<div class="acts" style="margin:0;flex-wrap:wrap"><label class="btn sm" for="f_file">${ico("img",15)} galeria</label><input id="f_file" type="file" accept="image/*" hidden><button class="btn sm" id="f_pimg">colar imagem</button></div>
+        <input id="f_img" class="field" type="text" placeholder="ou link de uma imagem" value="${esc(f.img||"")}" autocomplete="off" autocapitalize="off">
+        <div id="f_prev">${f.blob?`<img class="prevw" src="${esc(f.prev||"")}" alt="">`:""}</div>`:""}
+      </div><div class="pmsg" id="pmsg" aria-live="polite"></div>
+      <div class="acts"><button class="btn go" id="f_save" style="flex:1">guardar</button></div>`}
+
+  function grab(){const g=id=>{const e=document.getElementById(id);return e?e.value.trim():undefined};
+    for(const [k,id] of [["url","f_url"],["title","f_title"],["price","f_price"],["text","f_text"],["img","f_img"],["p","f_p"]]){const v=g(id);if(v!==undefined)form[k]=v}}
+  const msg=t=>{const e=$("#pmsg");if(e)e.textContent=t};
+  async function setBlob(b){if(!b)return;form.blob=b;form.prev=URL.createObjectURL(b);if(st.m==="pick"){goForm("print",{blob:b,prev:form.prev});return}
+    const p=$("#f_prev");if(p)p.innerHTML=`<img class="prevw" src="${esc(form.prev)}" alt="">`}
+  function goForm(type,pre){form={type,...pre};st={m:"form"};render()}
+  function fromUrl(raw){const d=detect(raw);if(!d)return msg("não achei um link válido.");
+    const pre={url:d.url||"",title:d.title||"",p:d.p,plat:d.plat,vid:d.vid,img:d.type==="print"?d.img:""};goForm(d.type,pre)}
+
+  async function save(){
+    grab();const f=form,t=f.type,v={id:"i"+Date.now().toString(36),type:t,at:Date.now()};
+    const needUrl=["video","blog","site","ingresso","reserva"].includes(t);
+    if(needUrl){if(!f.url)return msg("cole o link.");const d=detect(f.url);if(!d)return msg("esse link não parece válido.");v.url=d.url||f.url;
+      if(t==="video"){if(d.type!=="video")return msg("esse link não é de um vídeo do tiktok, reels ou youtube.");v.plat=d.plat;v.vid=d.vid}}
+    if(t==="spot"){if(f.url){v.url=f.url;if(!detect(f.url))return msg("o link do maps não parece válido.")}
+      const ps=f.p&&(Array.isArray(f.p)?f.p:parseCoords(f.p));if(f.p&&!ps)return msg("não entendi as coordenadas. use o formato 35.6595, 139.7005.");
+      v.p=ps||(f.url?parseMapsLink(f.url):null)||undefined}
+    if(t==="ingresso"&&f.price)v.price=f.price;
+    if(f.text)v.text=f.text;if(f.title)v.title=f.title;
+    if(["nota","dica","pose"].includes(t)&&!f.text&&!f.blob&&!f.img)return msg("escreva um texto curto.");
+    if(t==="print"&&!f.blob&&!f.img)return msg("escolha uma imagem, cole um print ou use um link.");
+    if(f.blob){if(!canShare())return msg("para enviar imagens, entre na conta do grupo (engrenagem). ou use o link da imagem.");
+      msg("enviando a imagem…");try{v.img=await uploadFb(f.blob)}catch(e){return msg("não consegui enviar a imagem.")}}
+    else if(f.img){if(!/^https?:\/\//.test(f.img))return msg("o link da imagem precisa começar com http.");v.img=f.img}
+    if(t==="video"){msg("lendo o link…");const m=await fetchMeta(v);if(m.plat){v.plat=m.plat;v.vid=m.vid}if(!v.title&&m.title)v.title=m.title;if(!v.text&&m.desc)v.text=m.desc;if(m.img&&!v.img)v.img=m.img;if(!v.title)v.title=PLAT[v.plat]==="reels"?"reels":PLAT[v.plat]}
+    if(t==="spot"&&!v.title&&f.url){const pl=f.url.match(/\/place\/([^/@?]+)/);if(pl)v.title=decodeURIComponent(pl[1].replace(/\+/g," "))}
+    await saveOps([{t:"g+",k,kind:"itens",v}]);list=guideData(c,it,k);filter="todos";st={m:"grid"};render();
+    if(v.plat==="tl")toast("link curto: o vídeo vai abrir no app do tiktok.")}
+
+  function render(){
+    const b=box();setPaste(null);
+    if(st.m==="grid")b.innerHTML=gridView();else if(st.m==="view")b.innerHTML=viewer(st.x);else if(st.m==="pick")b.innerHTML=pickView();else b.innerHTML=formView();
+    $("#jaov").scrollTop=0;bind()}
+  function bind(){
+    $("#gx").onclick=closeSheet;const gb=$("#gback");
+    if(st.m==="grid"){
+      document.querySelectorAll("#gbox [data-gf]").forEach(x=>x.onclick=()=>{filter=x.dataset.gf;render()});
+      const g=document.querySelector("#gbox [data-grp]");if(g)g.onclick=()=>{group=!group;render()};
+      document.querySelectorAll("#gbox [data-gi]").forEach(x=>x.onclick=()=>{const m=list.find(y=>y.id===x.dataset.gi);if(!m)return;
+        if(m.type==="spot"&&m.p){mapSheet(shortTitle(m),"",m.p)}else{st={m:"view",x:m};render()}});
+      $("#gadd").onclick=()=>{st={m:"pick"};render()}}
+    else if(st.m==="view"){gb.onclick=()=>back("grid");const x=st.x;
+      const gm=document.querySelector("#gbox [data-gmap]");if(gm)gm.onclick=()=>mapSheet(shortTitle(x),x.p?"":`${shortTitle(x)}, ${c.area}`,x.p);
+      const gr=document.querySelector("#gbox [data-groute]");if(gr)gr.onclick=()=>routeSheet(c,{n:shortTitle(x),qq:x.p.join(",")},null);
+      const cp=$("#gcp");if(cp)cp.onclick=()=>copyTxt(x.p.join(", "));
+      const rem=$("#grem");rem.onclick=async()=>{if(rem.dataset.s!=="1"){rem.dataset.s="1";rem.textContent="toque de novo para remover";return}
+        await removeItem(k,x);list=guideData(c,it,k);back("grid")}}
+    else if(st.m==="pick"){gb.onclick=()=>back("grid");
+      const go=()=>fromUrl($("#aurl").value),au=$("#aurl");au.addEventListener("paste",()=>setTimeout(go,40));au.onkeydown=e=>{if(e.key==="Enter")go()};au.onchange=go;
+      $("#apaste").onclick=async()=>{try{if(navigator.clipboard.read){for(const item of await navigator.clipboard.read()){const tp=item.types.find(x=>x.startsWith("image/"));if(tp){await setBlob(await item.getType(tp));return}}}}catch(e){}
+        try{au.value=await navigator.clipboard.readText();go()}catch(e){msg("o navegador não liberou a área de transferência. toque e segure no campo e escolha colar.")}};
+      document.querySelectorAll("#gbox [data-ty]").forEach(x=>x.onclick=()=>goForm(x.dataset.ty,{}));
+      setPaste(e=>{const im=[...((e.clipboardData||{}).items||[])].find(x=>x.type.startsWith("image/"));if(im){e.preventDefault();setBlob(im.getAsFile())}})}
+    else{gb.onclick=()=>{grab();st={m:"pick"};render()};
+      document.querySelectorAll("#gbox [data-ft]").forEach(x=>x.onclick=()=>{grab();form.type=x.dataset.ft;render()});
+      const gps=$("#f_gps");if(gps)gps.onclick=()=>{if(!navigator.geolocation)return msg("este aparelho não informa a localização.");msg("buscando sua localização…");
+        navigator.geolocation.getCurrentPosition(p=>{$("#f_p").value=`${p.coords.latitude.toFixed(6)}, ${p.coords.longitude.toFixed(6)}`;msg("coordenadas preenchidas.")},()=>msg("não consegui sua localização."),{timeout:9000,enableHighAccuracy:true})};
+      const fp=$("#f_p"),fu=$("#f_url");
+      if(fp){const chk=()=>{const pi=$("#f_pinfo");if(!pi)return;let ps=parseCoords(fp.value)||(fu&&parseMapsLink(fu.value));pi.textContent=ps?`coordenadas: ${ps[0].toFixed(5)}, ${ps[1].toFixed(5)}`:"";if(ps&&!fp.value&&fu)fp.value=ps.join(", ")};fp.oninput=chk;if(fu)fu.oninput=chk;chk()}
+      const ff=$("#f_file");if(ff)ff.onchange=e=>setBlob(e.target.files[0]);const pi=$("#f_pimg");
+      if(pi)pi.onclick=async()=>{try{for(const item of await navigator.clipboard.read()){const tp=item.types.find(x=>x.startsWith("image/"));if(tp){await setBlob(await item.getType(tp));return}}msg("não achei imagem copiada.")}catch(e){msg("o navegador não liberou a área de transferência. use a galeria ou o link.")}};
+      setPaste(e=>{const im=[...((e.clipboardData||{}).items||[])].find(x=>x.type.startsWith("image/"));if(im){e.preventDefault();grab();setBlob(im.getAsFile())}});
+      $("#f_save").onclick=save}}
+  render()}
 
 function acct(){
   if(!FB)return `<div class="hint left">Não consegui conectar ao Firebase. Confira a internet e toque em Atualizar agora.</div>`;
@@ -685,7 +932,7 @@ function city(){
   const missing=legs(day).some(l=>l.m==="t"&&l.fare==null);
 
   let tl="",nv=0;
-  if(day.start)tl+=row("home",`<div class="stop"><div class="n">${esc(c.home.n)}</div><div class="t">${day.depart?esc(day.depart):"Saída"}</div></div>`,"家");
+  if(day.start)tl+=row("home",`<div class="stop"><div class="n">${esc(c.home.n)}</div><div class="t">${day.depart?esc(day.depart):"Saída"}</div></div>`,ico("airbnb",16));
   else if(day.depart)tl+=note(day.depart);
   day.items.forEach((it,i)=>{
     if(it.txt){tl+=note(it.txt);return}
@@ -693,11 +940,11 @@ function city(){
     if(it.leg)tl+=legRow(it.leg);
     const n=it.home?c.home.n:it.n,isDone=!!done[key(i)],num=day.items.slice(0,i+1).filter(x=>x.n).length;
     const open=view.open===i;
-    tl+=`<li class="row${isDone?" done":""}"><div class="rail"><div class="dot${it.home?" home":""}${i===nextIdx?" next":""}">${it.home?"家":num}</div></div>
+    tl+=`<li class="row${isDone?" done":""}"><div class="rail"><div class="dot${it.home?" home":""}${i===nextIdx?" next":""}">${it.home?ico("airbnb",16):num}</div></div>
       <div><div class="srow"><button class="stop" data-o="${i}" aria-expanded="${open}"><div class="n">${esc(n)}</div>${(nv=it.home?0:gCount(guideData(c,it,ek(it))),it.time||it.info||nv)?`<div class="t">${esc([it.time,it.info,nv?`Guia com ${nv} ${nv>1?"itens":"item"}`:""].filter(Boolean).join(", "))}</div>`:""}</button>${open?"":thumb(i,it)}</div>
       ${open?detail(it,i,isDone):""}</div></li>`;
   });
-  if(day.end){tl+=legRow(day.end);tl+=row("home",`<div class="stop"><div class="n">${esc(c.home.n)}</div><div class="t">Fim do dia</div></div>`,"家")}
+  if(day.end){tl+=legRow(day.end);tl+=row("home",`<div class="stop"><div class="n">${esc(c.home.n)}</div><div class="t">Fim do dia</div></div>`,ico("airbnb",16))}
 
   const nx=day.items[nextIdx];
   const focus=nx?`<section class="focus" aria-label="Próxima parada">${big(nextIdx,nx,false)}
@@ -705,7 +952,7 @@ function city(){
      <h3>${esc(nx.home?c.home.n:nx.n)}</h3>${nx.ja?`<div class="jn ja">${esc(nx.ja)}</div>`:""}
      ${nx.leg?`<div class="how">${legBody(nx.leg)}</div>`:""}
      ${nx.note?`<p>${esc(nx.note)}</p>`:""}
-     <div class="acts"><a class="btn go" href="${goURL(nx)}" target="_blank" rel="noopener">Ir</a>
+     <div class="acts"><button class="btn go" data-r="${nextIdx}">Ir</button>${nx.home?`<button class="btn" data-h aria-label="hospedagem">${ico("airbnb",20)}</button>`:""}
       <button class="btn" data-ja="${nextIdx}" aria-label="Mostrar no idioma local">${c.lang}</button>
       <button class="btn" data-d="${nextIdx}">Feito</button></div>
      ${!nx.home&&gCount(guideData(c,nx,ek(nx)))?`<button class="btn wide guidebtn" data-g="${nextIdx}">Guia do lugar<span class="cnt">${gCount(guideData(c,nx,ek(nx)))}</span></button>`:""}</section>`
@@ -730,6 +977,8 @@ function city(){
   document.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{const i=+b.dataset.o;view.open=view.open===i?null:i;view.vid=null;city()});
   document.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{const k=key(+b.dataset.d);if(done[k])delete done[k];else done[k]=1;store.set("feito",done);view.open=null;city()});
   document.querySelectorAll("[data-ph]").forEach(b=>b.onclick=()=>{const it=day.items[+b.dataset.ph];editPhoto(ek(it),it.home?c.home.n:it.n,city,wikiFor(it)||`${it.n} ${c.area}`)});
+  document.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{const i=+b.dataset.r;routeSheet(c,day.items[i],prevStop(day,i))});
+  document.querySelectorAll("[data-h]").forEach(b=>b.onclick=()=>hospSheet(c));
   document.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{const it=day.items[+b.dataset.g];guide(c,it,ek(it),it.home?c.home.n:it.n)});
   bindTools();
   document.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{view.vid=b.dataset.v||null;city()});
@@ -753,7 +1002,7 @@ function city(){
   function detail(it,i,isDone){let gn=0;
     return `<div class="detail">${big(i,it,true)}${it.ja?`<p class="ja muted">${esc(it.ja)}</p>`:""}${it.note?`<p>${esc(it.note)}</p>`:""}${it.fee?`<p>Ingresso: ${esc(it.fee)}</p>`:""}
      ${(it.links||[]).map(([l,u])=>`<p><a href="${u}" target="_blank" rel="noopener">${esc(l)} ↗</a></p>`).join("")}
-     <div class="acts"><a class="btn sm" href="${goURL(it)}" target="_blank" rel="noopener">Ir</a>
+     <div class="acts"><button class="btn sm" data-r="${i}">Ir</button>${it.home?`<button class="btn sm" data-h>${ico("airbnb",16)} hospedagem</button>`:""}
       <a class="btn sm" href="${seeURL(it)}" target="_blank" rel="noopener">Fotos</a>
       <button class="btn sm" data-ja="${i}">${c.lang}</button>
       <button class="btn sm" data-g="${i}">Guia${(gn=gCount(guideData(c,it,ek(it))))?` <span class="cnt">${gn}</span>`:""}</button>
