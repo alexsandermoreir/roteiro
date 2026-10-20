@@ -172,6 +172,12 @@ details.map[open] summary::after{content:"−"}
 .linkrow .field{flex:1;min-width:0;font-family:var(--sans)}
 .pmsg{min-height:22px;font-size:14px;color:var(--muted);margin-top:8px}
 .hint{font-size:13px;color:var(--muted);margin-top:14px;text-align:center}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center}
+.th{width:60px;height:60px;border-radius:12px;object-fit:cover;background:var(--soft);display:block}
+.tile{display:grid;place-items:center;font-weight:700;font-size:17px;color:var(--accent)}
+.done .th{opacity:.45}
+.ph[data-wkb]{min-height:120px}
+.credit{display:block;font-size:12px;color:var(--muted);margin:-6px 0 10px;text-decoration:none}
 .alldone{text-align:center;padding:8px 0}
 @media (prefers-reduced-motion:no-preference){.day{animation:in .18s ease-out}@keyframes in{from{opacity:.4;transform:translateY(4px)}}}
 </style>
@@ -331,7 +337,20 @@ const DB={db:null,
     r.onerror=()=>res()}catch(e){res()}})},
   put(k,v){try{this.db.transaction("fotos","readwrite").objectStore("fotos").put(v,k)}catch(e){}},
   del(k){try{this.db.transaction("fotos","readwrite").objectStore("fotos").delete(k)}catch(e){}}};
-const photoOf=(k,it)=>photos[k]||it.img||null;
+const WTERM={"Aeroporto de Haneda": "Haneda Airport", "Estação de Shibuya": "Shibuya Station", "Meiji Jingu": "Meiji Shrine", "Takeshita Street": "Takeshita Street", "Harakado": "Harakado Tokyu Plaza Harajuku", "Omotesando Hills": "Omotesando Hills", "Miyashita Park": "Miyashita Park Shibuya", "Shibuya Sky": "Shibuya Scramble Square", "Hachiko": "Hachikō", "Shibuya 109": "Shibuya 109", "Center-Gai": "Center Gai", "Nintendo Tokyo": "Nintendo Tokyo", "Pokémon Center": "Pokémon Center store", "Shibuya Parco": "Shibuya Parco", "Nonbei Yokocho": "Nonbei Yokocho Shibuya", "Shibuya Crossing": "Shibuya Crossing", "Tokyo Disneyland": "Tokyo Disneyland", "Tokyo DisneySea": "Tokyo DisneySea", "Gōtoku-ji": "Gōtoku-ji", "Escadaria Your Name": "Suga Shrine Shinjuku", "Shinjuku Gyoen": "Shinjuku Gyo-en", "Prefeitura de Tóquio": "Tokyo Metropolitan Government Building", "Godzilla Head": "Shinjuku Toho Building", "Tokyu Kabukicho Tower": "Tokyu Kabukicho Tower", "Kabukicho": "Kabukichō", "Golden Gai": "Golden Gai", "Cross Shinjuku Vision": "Cross Shinjuku Vision", "Omoide Yokocho": "Omoide Yokochō", "Tokyo Tower": "Tokyo Tower", "Templo Zojoji": "Zōjō-ji", "teamLab Borderless": "teamLab Borderless", "Azabudai Hills": "Azabudai Hills", "Rainbow Bridge": "Rainbow Bridge (Tokyo)", "Odaiba Marine Park": "Odaiba Marine Park", "Estátua da Liberdade": "Statue of Liberty Odaiba", "Daikoku Parking Area": "Daikoku Parking Area", "Sensō-ji": "Sensō-ji", "Nakamise": "Nakamise-dōri", "Rio Sumida": "Sumida River", "Tokyo Skytree": "Tokyo Skytree", "The Matcha Tokyo": "Tokyo Solamachi", "Ueno Park": "Ueno Park", "Ameyoko": "Ameya-Yokochō", "Akihabara": "Akihabara", "Tsukiji Outer Market": "Tsukiji Outer Market", "Hamarikyu": "Hama-rikyū Gardens", "Ginza Six": "Ginza Six", "Yurakucho": "Yūrakuchō", "Palácio Imperial": "Tokyo Imperial Palace", "Marunouchi": "Marunouchi", "Estação de Tóquio": "Tokyo Station", "Busta Shinjuku": "Busta Shinjuku"};
+const wikiFor=it=>it.home?null:(WTERM[it.n]||null);
+const WK=(()=>{try{return JSON.parse(localStorage.getItem("wk"))||{}}catch(e){return {}}})();
+const saveWK=()=>{try{localStorage.setItem("wk",JSON.stringify(WK))}catch(e){}};
+const pend={};
+function wq(host,s){return fetch(`https://${host}.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrsearch=${encodeURIComponent(s)}&gsrlimit=1&prop=pageimages|info&inprop=url&piprop=thumbnail|name&pithumbsize=900`)
+  .then(r=>r.json()).then(d=>{const p=Object.values((d.query||{}).pages||{})[0];return p&&p.thumbnail&&!/logo|\.svg/i.test(p.pageimage||"")?{src:p.thumbnail.source,url:p.fullurl}:null}).catch(()=>undefined)}
+function wiki(it){const term=wikiFor(it);if(!term)return Promise.resolve(null);if(term in WK)return Promise.resolve(WK[term]);
+  if(!pend[term])pend[term]=wq("en",term).then(r=>r===null&&it.ja?wq("ja",it.ja):r).then(r=>{delete pend[term];if(r!==undefined){WK[term]=r;saveWK()}return r||null});
+  return pend[term]}
+const wikiOf=it=>{const t=wikiFor(it);return t&&WK[t]?WK[t]:null};
+const waiting=it=>{const t=wikiFor(it);return !!t&&!(t in WK)};
+const photoOf=(k,it)=>photos[k]||it.img||(wikiOf(it)||{}).src||null;
+const tileTxt=it=>esc(((it.home?"家":(it.ja||it.n)).replace(/^(Apple|THE|A PIT|MEGA|SHIBUYA|GINZA|Nintendo|ユニクロ)\s*/,"")).slice(0,2));
 const coverOf=c=>photos["capa-"+c.id]||c.cover||null;
 function shrink(blob){return new Promise(res=>{const u=URL.createObjectURL(blob),im=new Image();
   im.onload=()=>{const m=1400,r=Math.min(1,m/Math.max(im.width,im.height)),cv=document.createElement("canvas");cv.width=Math.round(im.width*r);cv.height=Math.round(im.height*r);
@@ -414,14 +433,13 @@ function city(){
     const n=it.home?"Airbnb":it.n,isDone=!!done[key(i)],num=day.items.slice(0,i+1).filter(x=>x.n).length;
     const open=view.open===i;
     tl+=`<li class="row${isDone?" done":""}"><div class="rail"><div class="dot${it.home?" home":""}${i===nextIdx?" next":""}">${it.home?"家":num}</div></div>
-      <div><button class="stop" data-o="${i}" aria-expanded="${open}"><div class="n">${esc(n)}</div>${it.time||it.info||it.vids?`<div class="t">${esc([it.time,it.info,it.vids?(it.vids.length>1?it.vids.length+" vídeos":"1 vídeo"):""].filter(Boolean).join(", "))}</div>`:""}</button>
+      <div><div class="srow"><button class="stop" data-o="${i}" aria-expanded="${open}"><div class="n">${esc(n)}</div>${it.time||it.info||it.vids?`<div class="t">${esc([it.time,it.info,it.vids?(it.vids.length>1?it.vids.length+" vídeos":"1 vídeo"):""].filter(Boolean).join(", "))}</div>`:""}</button>${open?"":thumb(i,it)}</div>
       ${open?detail(it,i,isDone):""}</div></li>`;
   });
   if(day.end){tl+=legRow(day.end);tl+=row("home",`<div class="stop"><div class="n">Airbnb</div><div class="t">Fim do dia</div></div>`,"家")}
 
   const nx=day.items[nextIdx];
-  const nph=nx?photoOf(key(nextIdx),nx):null;
-  const focus=nx?`<section class="focus" aria-label="Próxima parada">${nph?`<img class="ph" src="${esc(nph)}" alt="">`:""}
+  const focus=nx?`<section class="focus" aria-label="Próxima parada">${big(nextIdx,nx,false)}
      <div class="eyebrow">${day.d===today?"Agora":"Primeira parada pendente"}</div>
      <h3>${esc(nx.home?"Airbnb":nx.n)}</h3>${nx.ja?`<div class="jn ja">${esc(nx.ja)}</div>`:""}
      ${nx.leg?`<div class="how">${legBody(nx.leg)}</div>`:""}
@@ -453,6 +471,8 @@ function city(){
   document.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{view.vid=b.dataset.v||null;city()});
   document.querySelectorAll("[data-ja]").forEach(b=>b.onclick=()=>showJa(day.items[+b.dataset.ja]));
   $("#mapd").ontoggle=e=>store.set("mapa",e.target.open);
+  document.querySelectorAll("[data-wk],[data-wkb]").forEach(el=>{const i=+(el.dataset.wk??el.dataset.wkb),it=day.items[i];
+    wiki(it).then(r=>{if(!el.isConnected)return;if(r)el.src=r.src;else if(el.dataset.wk!=null){const d=document.createElement("div");d.className="th tile ja";d.textContent=tileTxt(it);el.replaceWith(d)}else el.remove()})});
   const cur=document.querySelector('.dchip[aria-current="true"]');if(cur)cur.scrollIntoView({inline:"center",block:"nearest"});
 
   function row(cls,inner,mark){return `<li class="row"><div class="rail"><div class="dot ${cls}">${mark}</div></div><div>${inner}</div></li>`}
@@ -464,9 +484,16 @@ function city(){
         <div class="pact"><a href="${url}" target="_blank" rel="noopener">Abrir no app ↗</a><button data-v="">Fechar</button></div></div>`;
       return `<button class="vtile ${p}" data-v="${k}"><span class="plat">${p==="tt"?"TikTok":"Reels"}</span><span class="play" aria-hidden="true"></span><span class="vt">${esc(title)}</span></button>`}).join("")}</div>`;
   }
+  function thumb(i,it){const src=photoOf(key(i),it);
+    if(src)return `<img class="th" src="${esc(src)}" alt="" loading="lazy">`;
+    if(waiting(it))return `<img class="th" data-wk="${i}" alt="">`;
+    return `<div class="th tile ja" aria-hidden="true">${tileTxt(it)}</div>`}
+  function big(i,it,credit){const src=photoOf(key(i),it),w=!photos[key(i)]&&!it.img?wikiOf(it):null;
+    if(src)return `<img class="ph" src="${esc(src)}" alt="">${credit&&w?`<a class="credit" href="${w.url}" target="_blank" rel="noopener">Foto: Wikipedia</a>`:""}`;
+    if(waiting(it))return `<img class="ph" data-wkb="${i}" alt="">`;
+    return ""}
   function detail(it,i,isDone){
-    const ph=photoOf(key(i),it);
-    return `<div class="detail">${ph?`<img class="ph" src="${esc(ph)}" alt="">`:""}${it.ja?`<p class="ja muted">${esc(it.ja)}</p>`:""}${it.note?`<p>${esc(it.note)}</p>`:""}${it.fee?`<p>Ingresso: ${esc(it.fee)}</p>`:""}
+    return `<div class="detail">${big(i,it,true)}${it.ja?`<p class="ja muted">${esc(it.ja)}</p>`:""}${it.note?`<p>${esc(it.note)}</p>`:""}${it.fee?`<p>Ingresso: ${esc(it.fee)}</p>`:""}
      ${it.vids?vids(it,i):""}
      ${(it.links||[]).map(([l,u])=>`<p><a href="${u}" target="_blank" rel="noopener">${esc(l)} ↗</a></p>`).join("")}
      <div class="acts"><a class="btn sm" href="${goURL(it)}" target="_blank" rel="noopener">Ir</a>
