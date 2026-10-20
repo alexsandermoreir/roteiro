@@ -140,14 +140,16 @@ details.map[open] summary::after{content:"−"}
 .jaov .close{margin-top:32px}
 
 .field{width:100%;max-width:420px;height:48px;border-radius:12px;border:1px solid var(--hair);background:var(--bg);color:var(--fg);padding:0 14px;font:16px var(--ja)}
-.vids{display:flex;gap:10px;overflow-x:auto;margin:4px 0 12px;padding-bottom:4px}
-.vtile{flex:none;position:relative;width:104px;aspect-ratio:9/16;border-radius:12px;overflow:hidden;color:#fff;text-align:left;padding:8px;display:flex;flex-direction:column;justify-content:space-between}
+.vids{display:flex;gap:12px;overflow-x:auto;margin:4px 0 12px;padding-bottom:4px;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none}
+.vids::-webkit-scrollbar{display:none}
+.vslide{flex:0 0 min(78%,300px);scroll-snap-align:start}
+.vtile{position:relative;width:100%;aspect-ratio:9/16;border-radius:12px;overflow:hidden;color:#fff;text-align:left;padding:8px;display:flex;flex-direction:column;justify-content:space-between}
 .vtile.tt{background:linear-gradient(160deg,#111 0%,#2b2b2b 60%,#25F4EE33 80%,#FE2C5544 100%)}
 .vtile.ig{background:linear-gradient(160deg,#4F5BD5 0%,#962FBF 40%,#D62976 70%,#FA7E1E 100%)}
-.plat{font-size:12px;font-weight:700;letter-spacing:.02em}
-.play{align-self:center;width:0;height:0;border-left:16px solid #fff;border-top:10px solid transparent;border-bottom:10px solid transparent;opacity:.9}
-.vt{font-size:11px;line-height:1.25;opacity:.9;overflow-wrap:anywhere}
-.player{flex:none;width:min(100%,340px)}
+.plat{font-size:13px;font-weight:700;letter-spacing:.02em}
+.play{align-self:center;width:0;height:0;border-left:30px solid #fff;border-top:18px solid transparent;border-bottom:18px solid transparent;opacity:.9}
+.vt{font-size:14px;font-weight:600;line-height:1.25;opacity:.9;overflow-wrap:anywhere}
+.player{width:100%}
 .player iframe{display:block;width:100%;border:0;border-radius:12px;background:#000}
 .player.tt iframe{aspect-ratio:9/16}
 .player.ig iframe{height:620px;background:var(--surface)}
@@ -479,11 +481,13 @@ function city(){
   function note(s){return `<li class="row note"><div class="rail"></div><div class="body">${esc(s)}</div></li>`}
   function legRow(l){return `<li class="row leg"><div class="rail">${legRail(l)}</div><div class="body">${legBody(l)}</div></li>`}
   function vids(it,i){
-    return `<div class="vids">${it.vids.map(([p,id,title],j)=>{const k=`${i}-${j}`,url=p==="tt"?`https://www.tiktok.com/@/video/${id}`:`https://www.instagram.com/reel/${id}/`;
-      if(view.vid===k)return `<div class="player ${p}"><iframe src="${p==="tt"?`https://www.tiktok.com/player/v1/${id}?description=0&music_info=0&rel=0`:`https://www.instagram.com/reel/${id}/embed`}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen loading="lazy" title="${esc(title)}"></iframe>
-        <div class="pact"><a href="${url}" target="_blank" rel="noopener">Abrir no app ↗</a><button data-v="">Fechar</button></div></div>`;
-      return `<button class="vtile ${p}" data-v="${k}"><span class="plat">${p==="tt"?"TikTok":"Reels"}</span><span class="play" aria-hidden="true"></span><span class="vt">${esc(title)}</span></button>`}).join("")}</div>`;
+    const n=it.vids.length;
+    return `<div class="vids" data-vc="${i}">${it.vids.map(([p,id,title],j)=>{const k=`${i}-${j}`,url=p==="tt"?`https://www.tiktok.com/@/video/${id}`:`https://www.instagram.com/reel/${id}/`;
+      const inner=view.vid===k?`<div class="player ${p}"><iframe src="${p==="tt"?`https://www.tiktok.com/player/v1/${id}?description=0&music_info=0&rel=0`:`https://www.instagram.com/reel/${id}/embed`}" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen loading="lazy" title="${esc(title)}"></iframe></div>`
+        :`<button class="vtile ${p}" data-v="${k}"><span class="plat">${p==="tt"?"TikTok":"Reels"}</span><span class="play" aria-hidden="true"></span><span class="vt">${esc(title)}</span></button>`;
+      return `<div class="vslide">${inner}<div class="pact"><a href="${url}" target="_blank" rel="noopener">Abrir no app ↗</a>${n>1?`<span class="muted">${j+1} de ${n}</span>`:""}</div></div>`}).join("")}</div>`;
   }
+
   function thumb(i,it){const src=photoOf(key(i),it);
     if(src)return `<img class="th" src="${esc(src)}" alt="" loading="lazy">`;
     if(waiting(it))return `<img class="th" data-wk="${i}" alt="">`;
@@ -547,7 +551,7 @@ function mapSVG(day){
 
 /* gestos: arrastar para o lado troca o dia */
 let sx=0,sy=0;
-document.addEventListener("touchstart",e=>{if(!view.city||e.target.closest(".days,.mapbox"))return sx=null;sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+document.addEventListener("touchstart",e=>{if(!view.city||e.target.closest(".days,.mapbox,.vids"))return sx=null;sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
 document.addEventListener("touchend",e=>{if(!view.city||sx==null)return;const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
   if(Math.abs(dx)>70&&Math.abs(dy)<45){const nd=view.day+(dx<0?1:-1);if(nd>=0&&nd<view.city.days.length){view.day=nd;view.open=null;city();scrollTo(0,0)}}},{passive:true});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#jaov").hidden=true});
