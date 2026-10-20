@@ -731,7 +731,7 @@ function mapSheet(title,q,p){
     <div class="acts" style="flex-wrap:wrap"><a class="btn sm" href="https://www.google.com/maps/search/?api=1&query=${enc(p?p.join(","):q)}" target="_blank" rel="noopener">abrir no app do google maps ↗</a></div>`);
   $("#mx").onclick=close}
 
-const GKEY="AIzaSyCRcaWoez4Or6QYesEaYoSHrxBrOUxYRhw";
+const GKEY="";
 const slug=t=>String(t).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
 function ensureLines(leg){if(leg&&leg.segs)leg.segs.forEach(sg=>{if(sg[3]&&!LINES[sg[0]])LINES[sg[0]]=sg[3]})}
 const whenISO=(c,day,it)=>{const m=(it&&it.time||"").match(/(\d{1,2})\s*h\s*(\d{2})?/),hh=m?m[1].padStart(2,"0"):"10",mm=m&&m[2]?m[2]:"00";
@@ -779,7 +779,7 @@ function routeSheet(c,it,prev,day){
      <div class="seg" style="margin-top:14px">${[["r","transporte"],["w","a pé"],["d","carro"]].map(([v,l])=>`<button data-m="${v}" aria-pressed="${mode===v}">${l}</button>`).join("")}</div>
      <div class="gchips" style="margin:12px 0 0"><span class="muted" style="align-self:center;font-size:13px">saindo de</span>${opts.map(o=>`<button class="gchip" data-o="${o.k}" aria-pressed="${org.k===o.k}">${esc(o.l)}</button>`).join("")}</div>
      ${it.leg?`<div class="ficha"><div class="fr"><span>no seu roteiro</span><div>${legBody(it.leg)}</div></div></div>`:""}
-     ${mode==="r"&&ready?`<div class="live" id="live">${liveHTML()}</div>`:""}
+     ${GKEY&&mode==="r"&&ready?`<div class="live" id="live">${liveHTML()}</div>`:""}
      ${ready?`<iframe class="mapframe" src="${embedURL({s:org.q,d:dest,m:mode})}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="rota"></iframe>`:`<div class="mapframe wait">buscando sua localização…</div>`}
      <div class="hint left" style="margin-top:8px">o google mostra as linhas, os horários e os valores de agora.</div>
      <div class="acts" style="flex-wrap:wrap"><a class="btn sm" href="${dirURL(org.q,dest,mode)}" target="_blank" rel="noopener">abrir no app do google maps ↗</a></div>`;
