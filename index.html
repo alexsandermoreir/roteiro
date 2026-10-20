@@ -813,10 +813,25 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("#jaov").hidden=t
 applyTheme();
 function loadData(){return fetch("dados.js?v="+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{DATA_TEXT=t;const sc=document.createElement("script");sc.textContent=t;document.head.appendChild(sc)})
   .catch(()=>new Promise(res=>{const sc=document.createElement("script");sc.src="dados.js";sc.onload=res;sc.onerror=res;document.head.appendChild(sc)}))}
+const sig=t=>{let h=0;for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))|0;return t.length+":"+h};
+let updating=false;
+async function autoUpdate(first){
+  if(updating)return;updating=true;
+  try{const [a,b]=await Promise.all([fetch("index.html?v="+Date.now(),{cache:"no-store"}).then(r=>r.text()),fetch("dados.js?v="+Date.now(),{cache:"no-store"}).then(r=>r.text())]);
+    const now=sig(a)+"|"+sig(b),old=store.get("ver");
+    if(!old){store.set("ver",now)}
+    else if(old!==now){
+      let tries=0;try{tries=+sessionStorage.getItem("recarga")||0}catch(e){}
+      if(tries<2){store.set("ver",now);try{sessionStorage.setItem("recarga",tries+1)}catch(e){}
+        if(first||$("#jaov").hidden)reloadApp();else store.set("ver",old)}
+    }else{try{sessionStorage.removeItem("recarga")}catch(e){}}
+  }catch(e){}
+  updating=false}
+setInterval(()=>{if(!document.hidden&&$("#jaov").hidden)autoUpdate()},60000);
 let lastCheck=Date.now();
 document.addEventListener("visibilitychange",async()=>{if(document.hidden||Date.now()-lastCheck<20000)return;lastCheck=Date.now();
   const before=ED_TEXT;await loadEd();if(ED_TEXT!==before&&$("#jaov").hidden)rerender();flushLocal();
-  try{const t=await (await fetch("dados.js?v="+Date.now(),{cache:"no-store"})).text();if(DATA_TEXT&&t&&t!==DATA_TEXT)toast("Há uma versão nova do roteiro.",["Atualizar",reloadApp])}catch(e){}});
+  autoUpdate()});
 Promise.all([loadData(),DB.load(),loadEd()]).then(function(){
   const today=jstToday(),h=location.hash.slice(1);
   const c=TRIP.cities.find(c=>c.days&&c.days.some(d=>d.d===today));
@@ -824,7 +839,7 @@ Promise.all([loadData(),DB.load(),loadEd()]).then(function(){
   else if(h&&TRIP.cities.some(x=>x.id===h&&x.days)){CUR=VIAGENS()[0];openCity(h)}
   else if(h&&VIAGENS().some(t=>t.id===h))openTrip(h);else trips();
   if(location.search)try{history.replaceState(null,"",location.pathname+location.hash)}catch(e){}
-  initFirebase();
+  initFirebase();autoUpdate(true);
 });
 </script>
 
