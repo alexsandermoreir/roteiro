@@ -354,6 +354,7 @@ h1,h2,h3,.eyebrow,.lbl,.btn,.bar-title,.city .name,.city .dates,.city .stat,.dch
 
 <script>
 /* utilidades */
+const SHARE_RAW=(()=>{try{const q=new URLSearchParams(location.search);return [q.get("url"),q.get("text"),q.get("title")].filter(Boolean).join(" ")}catch(e){return ""}})();
 const $=s=>document.querySelector(s);
 const C=()=>view.city;
 const money=(n,c=view.city)=>((c&&c.cur)||"¥")+n.toLocaleString("pt-BR");
@@ -1016,9 +1017,9 @@ const tripDays=()=>{const out=[];(CUR?CUR.cities:[]).filter(c=>c.days).forEach(c
 const dayTitle=(c,day)=>{const D=dt(day.d);return `${DOWS[D.getDay()]}, ${String(D.getDate()).padStart(2,"0")}/${String(D.getMonth()+1).padStart(2,"0")}`};
 function menuSheet(){
   const close=sheet(`<div class="gh"><div style="flex:1"><div class="eyebrow">menu</div><h3>${esc(CUR.nome||"roteiro")}</h3></div><button class="iconbtn" id="mnx" aria-label="fechar">${ico("x",20)}</button></div>
-   <div class="menul">${[["roteiro","pin","roteiro","as cidades e os dias"],["transp","nav","transportes","linhas, estações e valores por dia"],["spots","cam","guia de spots","coordenadas e referências por dia"],["lista","menu","lista de locais","só nomes, dia, horário e ordem"],["compras","bag","compras","tudo o que quer comprar, por cidade"]].map(([k,i,t,s])=>`<button class="mrow" data-mn="${k}">${ico(i,22)}<span><b>${t}</b><small>${s}</small></span></button>`).join("")}</div>`,()=>{});
+   <div class="menul">${[["roteiro","pin","roteiro","as cidades e os dias"],["transp","nav","transportes","linhas, estações e valores por dia"],["spots","cam","guia de spots","coordenadas e referências por dia"],["lista","menu","lista de locais","só nomes, dia, horário e ordem"],["compras","bag","compras","tudo o que quer comprar, por cidade"],["clip","copy","guardar link copiado","do instagram ou tiktok, no guia de um local"]].map(([k,i,t,s])=>`<button class="mrow" data-mn="${k}">${ico(i,22)}<span><b>${t}</b><small>${s}</small></span></button>`).join("")}</div>`,()=>{});
   $("#mnx").onclick=close;
-  document.querySelectorAll("[data-mn]").forEach(b=>b.onclick=()=>{const k=b.dataset.mn;close();if(k==="roteiro"){if(view.city){view.city=null;home();scrollTo(0,0)}else rerender();return}pageView(k)})}
+  document.querySelectorAll("[data-mn]").forEach(b=>b.onclick=()=>{const k=b.dataset.mn;close();if(k==="clip"){shareClip();return}if(k==="roteiro"){if(view.city){view.city=null;home();scrollTo(0,0)}else rerender();return}pageView(k)})}
 function pageView(kind){
   const o=$("#ovm");MAPREFRESH=null;o.hidden=false;
   const T={transp:"transportes",spots:"guia de spots",lista:"lista de locais",compras:"compras"}[kind];
@@ -1077,6 +1078,36 @@ function pageView(kind){
       ttMeta(id,a.dataset.turl||"https://www.tiktok.com/@/video/"+id).then(m=>{if(!a.isConnected||!m)return;const sp=a.querySelector("span");
         if(m.t&&sp)sp.lastChild.textContent=" "+capTitle(m.t);if(m.i&&!a.querySelector("img")){const im=new Image();im.alt="";im.referrerPolicy="no-referrer";im.onload=()=>a.prepend(im);im.src=m.i}}).catch(()=>{})})};
   draw()}
+
+/* ===== guardar link vindo do compartilhar ===== */
+function shareFlow(raw){
+  const d=detect(raw);if(!d){toast("Não achei um link nesse texto.");return}
+  const trips=VIAGENS();let trip=trips.length===1?trips[0]:null,c=null,day=null;
+  const close=sheet(`<div id="sbox"></div>`,()=>{if(CUR)rerender()});
+  const what=d.type==="video"?(PLAT[d.plat]||"vídeo"):d.type==="spot"?"spot":d.type==="print"?"imagem":"link";
+  const head=t=>`<div class="gh"><div style="flex:1;min-width:0"><div class="eyebrow">guardar ${what}</div><h3>${t}</h3><div class="muted" style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(hostOf(d.url||d.img||"")||"")}</div></div><button class="iconbtn" id="sx" aria-label="fechar">${ico("x",20)}</button></div>`;
+  const draw=()=>{const b=$("#sbox");let h="",items=[];
+    if(!trip){h=head("em qual viagem?");items=trips.map(t=>({k:t.id,l:t.nome,s:t.datas||""}))}
+    else if(!c){h=head("em qual cidade?");items=trip.cities.filter(x=>x.days).map(x=>({k:x.id,l:x.flag+" "+x.name,s:""}))}
+    else if(!day){h=head("em qual dia?");items=c.days.map((x,i)=>{const e=effDay(c,x);return {k:String(i),l:dayTitle(c,e),s:e.label||""}})}
+    else{h=head("em qual local?");items=day.items.filter(i=>i.n&&!i.home).map(i=>({k:i._k,l:i.n,s:i.time||""}))}
+    b.innerHTML=h+`<div class="menul">${items.length?items.map(x=>`<button class="mrow" data-sk="${esc(x.k)}"><span><b>${esc(x.l)}</b>${x.s?`<small>${esc(x.s)}</small>`:""}</span></button>`).join(""):`<p class="muted">nenhum local neste dia. inclua uma parada no modo de edição e tente de novo.</p>`}</div>
+      ${trip&&trips.length>1||c?`<div class="acts"><button class="btn sm" id="sb">voltar</button></div>`:""}`;
+    $("#sx").onclick=close;const sb=$("#sb");if(sb)sb.onclick=()=>{if(day)day=null;else if(c)c=null;else trip=null;draw()};
+    document.querySelectorAll("#sbox [data-sk]").forEach(el=>el.onclick=async()=>{const k=el.dataset.sk;
+      if(!trip){trip=trips.find(t=>t.id===k)}else if(!c){c=trip.cities.find(x=>x.id===k)}
+      else if(!day){day=effDay(c,c.days[+k])}
+      else{const it=day.items.find(i=>i._k===k);if(!it)return;CUR=trip;buildCtx(c);
+        const v={id:"i"+Date.now().toString(36),type:d.type,at:Date.now()};if(d.url)v.url=d.url;if(d.plat){v.plat=d.plat;v.vid=d.vid}if(d.img)v.img=d.img;if(d.p)v.p=d.p;if(d.title)v.title=d.title;
+        b2(true);if(d.type==="video"){const m=await fetchMeta(v).catch(()=>({}));if(m.plat){v.plat=m.plat;v.vid=m.vid}if(!v.title&&m.title)v.title=m.title;if(!v.text&&m.desc)v.text=m.desc;if(m.img&&!v.img)v.img=m.img;if(!v.title)v.title=PLAT[v.plat]||"vídeo"}
+        await saveOps([{t:"g+",k:ekOf(c,day,it),kind:"itens",v}]);close();toast("Guardado em "+it.n+".");return}
+      draw()})};
+  const b2=on=>{const b=$("#sbox");if(on)b.innerHTML=head("guardando…")};
+  draw()}
+async function shareClip(){
+  let t="";try{t=await navigator.clipboard.readText()}catch(e){}
+  if(!t||!detect(t))return toast("Copie o link do vídeo no Instagram ou TikTok e toque de novo.");
+  shareFlow(t)}
 
 const HF=c=>[["endereco","endereço","area"],["ja","endereço em "+(c.lang||"idioma local"),"area"],["estacao","estação mais próxima (para o embarque)",""],["checkin","check-in",""],["checkout","check-out",""],["anfitriao","anfitrião",""],
   ["tel","telefone do anfitrião","tel"],["codigo","código ou senha de acesso","secret"],["wifi","wi-fi, rede e senha",""],["coords","coordenadas",""],["reserva","código de confirmação da reserva",""],["link","link da reserva","url"],["obs","observações","area"]];
@@ -1586,6 +1617,7 @@ Promise.all([loadData(),DB.load(),loadEd()]).then(function(){
   else if(h&&VIAGENS().some(t=>t.id===h))openTrip(h);else trips();
   if(location.search)try{history.replaceState(null,"",location.pathname+location.hash)}catch(e){}
   initFirebase();autoUpdate(true);
+  if(SHARE_RAW&&detect(SHARE_RAW)){CUR=CUR||VIAGENS()[0];setTimeout(()=>shareFlow(SHARE_RAW),400)}
 });
 </script>
 
