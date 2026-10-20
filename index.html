@@ -1486,7 +1486,7 @@ function city(){
     const n=it.home?c.home.n:it.n,isDone=!!done[key(i)],num=day.items.slice(0,i+1).filter(x=>x.n).length;
     const open=view.open===i;
     tl+=`<li class="row${isDone?" done":""}"><div class="rail"><div class="dot${it.home?" home":""}${i===nextIdx?" next":""}">${it.home?ico("airbnb",16):num}</div></div>
-      <div><div class="srow"><button class="stop" data-o="${i}" aria-expanded="${open}"><div class="n">${esc(n)}</div>${(nv=it.home?0:gCount(guideData(c,it,ek(it))),it.time||it.info||nv)?`<div class="t">${esc([it.time,it.info,nv?`Guia com ${nv} ${nv>1?"itens":"item"}`:""].filter(Boolean).join(", "))}</div>`:""}</button>${chk(i,isDone,0)}${open?"":thumb(i,it)}</div>
+      <div><div class="srow"><button class="stop" data-o="${i}" aria-expanded="${open}"><div class="n">${esc(n)}</div>${(nv=it.home?0:gCount(guideData(c,it,ek(it))),it.time||it.info||nv)?`<div class="t">${esc([it.time,it.info,nv?`Guia com ${nv} ${nv>1?"itens":"item"}`:""].filter(Boolean).join(", "))}</div>`:""}</button>${open?"":thumb(i,it)}</div>
       ${view.edit?`<div class="edrow"><button class="btn sm" data-ed="${i}">${ICON.pen} editar</button>${it.home?"":`<button class="btn sm" data-del="${i}">${ico("trash",15)} remover</button>`}</div>`:""}
       ${open?detail(it,i,isDone):""}</div></li>`;
     if(view.edit)tl+=`<li class="row ins"><div class="rail"></div><div><button class="btn sm" data-ins="${esc(it._k)}">${ico("plus",14)} incluir parada aqui</button></div></li>`;
