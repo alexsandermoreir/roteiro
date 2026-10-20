@@ -341,16 +341,17 @@ function effDay(c,day){
   nov.forEach(nv=>{const o={...nv.item,_k:nv.id,_n:nv.id,novo:1},ov=(ED.item||{})[dk+"|"+nv.id];if(ov)Object.assign(o,ov);
     const at=nv.after===""?-1:L.findIndex(x=>x._k===nv.after);if(nv.after!==""&&at<0)L.push(o);else L.splice(at+1,0,o)});
   if(ord&&ord.length)L=L.map((x,i)=>({x,i,o:ord.indexOf(x._k)})).sort((a,b)=>(a.o<0?1e6+a.i:a.o)-(b.o<0?1e6+b.i:b.o)).map(z=>z.x);
+  L.forEach(x=>ensureLines(x.leg));ensureLines(day.end);
   const val={...day,items:L};EFFC.set(day,{sig,val});return val}
 const legOf=f=>{const mode=f.mode;if(!mode||mode==="none")return null;const min=+f.min||0,km=+f.km||0;
   if(mode==="w")return {m:"w",min,km};if(mode==="tour")return {m:"tour",min,km,label:f.label||"De carro com a agência"};
-  const segs=(f.segs||[]).filter(s=>s.k&&LINES[s.k]).map(s=>s.f?[s.k,s.to||"",s.f]:[s.k,s.to||""]);
+  const segs=(f.segs||[]).filter(s=>s.k&&LINES[s.k]).map(s=>s.x?[s.k,s.to||"",s.f||"",s.x]:s.f?[s.k,s.to||"",s.f]:[s.k,s.to||""]);
   return {m:"t",min,km,fare:f.fare===""||f.fare==null?null:+f.fare,segs}};
 function editStop(c,day,it,afterK){
   const isNew=!it,home=it&&it.home,dk=c.id+"|"+day.d;
   const f={n:it?(it.n||""):"",ja:it?(it.ja||""):"",time:it?(it.time||""):"",info:it?(it.info||""):"",note:it?(it.note||""):"",fee:it?(it.fee||""):"",
     p:it&&it.p?it.p.join(", "):"",mode:"none",min:"",km:"",fare:"",segs:[],label:"",after:afterK==null?(day.items.length?day.items[day.items.length-1]._k:""):afterK};
-  const lg=it&&it.leg;if(lg){f.mode=lg.m;f.min=lg.min||"";f.km=lg.km||"";if(lg.m==="t"){f.fare=lg.fare==null?"":lg.fare;f.segs=(lg.segs||[]).map(([k,to,fr])=>({k,to,f:fr||""}))}if(lg.m==="tour")f.label=lg.label||""}
+  const lg=it&&it.leg;if(lg){f.mode=lg.m;f.min=lg.min||"";f.km=lg.km||"";if(lg.m==="t"){f.fare=lg.fare==null?"":lg.fare;f.segs=(lg.segs||[]).map(([k,to,fr,x])=>({k,to,f:fr||"",x}))}if(lg.m==="tour")f.label=lg.label||""}
   const lineOpts=Object.keys(LINES).map(k=>`<option value="${k}">${k} ${esc(LINES[k].n)}</option>`).join("");
   const close=sheet("<div id=\"ebox\"></div>",()=>{city()});
   let confirmDel=false;
@@ -415,7 +416,7 @@ const dayKm=day=>legs(day).reduce((s,l)=>s+(l.km||0),0);
 const cityFare=c=>c.days.reduce((s,d)=>s+dayFare(effDay(c,d)),0);
 
 const ink=hex=>{const n=parseInt(hex.slice(1),16),r=n>>16&255,g=n>>8&255,b=n&255;return (r*299+g*587+b*114)/1000>150?"#14161A":"#FFFFFF"};
-function chip(k){const L=LINES[k];return `<span class="chip${L.bus?" bus":""}" style="--c:${L.c};--ct:${ink(L.c)}">${L.bus?"":`<span class="code">${k}</span>`}${esc(L.n)}</span>`}
+function chip(k){const L=LINES[k];return `<span class="chip${L.bus?" bus":""}" style="--c:${L.c};--ct:${ink(L.c)}">${L.bus?"":`<span class="code">${L.code||k}</span>`}${esc(L.n)}</span>`}
 const LEGCTX=new WeakMap();
 function buildCtx(c){const hs=(hosp(c).estacao||c.home.sta||"").trim()||null;c.days.map(d=>effDay(c,d)).forEach(day=>{let last=day.start?hs:null,prev=day.start?c.home.n:null;
   const st=l=>l&&l.m==="t"&&l.segs&&l.segs.length?l.segs[l.segs.length-1][1]:null;
@@ -703,7 +704,29 @@ function mapSheet(title,q,p){
     <div class="acts" style="flex-wrap:wrap"><a class="btn sm" href="https://www.google.com/maps/search/?api=1&query=${enc(p?p.join(","):q)}" target="_blank" rel="noopener">abrir no app do google maps ↗</a></div>`);
   $("#mx").onclick=close}
 
-function routeSheet(c,it,prev){
+const GKEY="AIzaSyCRcaWoez4Or6QYesEaYoSHrxBrOUxYRhw";
+const slug=t=>String(t).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+function ensureLines(leg){if(leg&&leg.segs)leg.segs.forEach(sg=>{if(sg[3]&&!LINES[sg[0]])LINES[sg[0]]=sg[3]})}
+const whenISO=(c,day,it)=>{const m=(it&&it.time||"").match(/(\d{1,2})\s*h\s*(\d{2})?/),hh=m?m[1].padStart(2,"0"):"10",mm=m&&m[2]?m[2]:"00";
+  const tz=c.id==="istambul"?"+03:00":"+09:00";let t=new Date(`${day.d}T${hh}:${mm}:00${tz}`);if(isNaN(t)||t<Date.now()+300000)t=new Date(Date.now()+300000);return t.toISOString()};
+const waypoint=q=>{const p=parseCoords(q);return p&&/^\s*-?\d/.test(q)?{location:{latLng:{latitude:p[0],longitude:p[1]}}}:{address:q}};
+async function gRoute(org,dest,iso){
+  const key=[org,dest,iso.slice(0,13)].join("|"),cache=store.get("rotas")||{};if(cache[key])return {...cache[key],cached:true};
+  const today=new Date().toISOString().slice(0,10),cnt=store.get("gcalls")||{};if(cnt.d!==today)Object.assign(cnt,{d:today,n:0});
+  if(cnt.n>=40)throw new Error("limite de 40 consultas por dia neste aparelho atingido. volte amanhã ou use o mapa abaixo.");
+  cnt.n++;store.set("gcalls",cnt);
+  const r=await Promise.race([fetch("https://routes.googleapis.com/directions/v2:computeRoutes",{method:"POST",headers:{"Content-Type":"application/json","X-Goog-Api-Key":GKEY,
+    "X-Goog-FieldMask":"routes.duration,routes.distanceMeters,routes.travelAdvisory.transitFare,routes.legs.steps.travelMode,routes.legs.steps.transitDetails"},
+    body:JSON.stringify({origin:waypoint(org),destination:waypoint(dest),travelMode:"TRANSIT",departureTime:iso,languageCode:"pt-BR",units:"METRIC"})}),new Promise((_,j)=>setTimeout(()=>j(new Error("sem resposta do google")),12000))]);
+  const j=await r.json();if(!r.ok){const m=(j.error&&j.error.message)||"erro";throw new Error(r.status===403?"o google recusou a chave. confira se a Routes API está ativada e liberada na chave. ("+m+")":m)}
+  const rt=(j.routes||[])[0];if(!rt)throw new Error("o google não achou trajeto de transporte nesse horário.");
+  const steps=[];((rt.legs||[])[0]||{steps:[]}).steps.forEach(st=>{const td=st.transitDetails;if(!td)return;const ln=td.transitLine||{},vt=(ln.vehicle||{}).type||"";
+    const name=ln.nameShort||ln.name||"linha";steps.push({from:(td.stopDetails.departureStop||{}).name||"",to:(td.stopDetails.arrivalStop||{}).name||"",dep:td.stopDetails.departureTime,arr:td.stopDetails.arrivalTime,
+      n:ln.name||name,code:ln.nameShort||"",c:/^#[0-9a-f]{6}$/i.test(ln.color||"")?ln.color:"#3A9E6B",bus:/BUS/.test(vt)?1:0,stops:td.stopCount||0,head:td.headsign||""})});
+  const tf=(rt.travelAdvisory||{}).transitFare;const out={min:Math.round(parseInt(rt.duration)/60),km:+((rt.distanceMeters||0)/1000).toFixed(1),fare:tf&&tf.units!=null?+tf.units:(tf&&tf.currencyCode==="JPY"?0:null),cur:tf&&tf.currencyCode||"",steps};
+  const c2=store.get("rotas")||{};const ks=Object.keys(c2);if(ks.length>60)delete c2[ks[0]];c2[key]=out;store.set("rotas",c2);return out}
+const hhmm=(iso,c)=>{try{return new Date(iso).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit",timeZone:c.id==="istambul"?"Europe/Istanbul":"Asia/Tokyo"})}catch(e){return ""}};
+function routeSheet(c,it,prev,day){
   const label=it.home?c.home.n:(it.n||it.title||"destino"),dest=placeQ(c,it);
   let mode=it.leg?(it.leg.m==="w"?"w":it.leg.m==="tour"?"d":"r"):"r";
   const opts=[];
@@ -712,18 +735,36 @@ function routeSheet(c,it,prev){
   opts.push({k:"gps",l:"minha localização",q:""});
   let org=opts[0];
   const close=sheet2("<div id=\"rbox\"></div>");
+  let live=null,liveErr="",loading=false;const iso=day?whenISO(c,day,it):new Date(Date.now()+300000).toISOString();
+  const liveHTML=()=>{
+    if(loading)return `<div class="hint left">consultando o google…</div>`;
+    if(liveErr)return `<div class="hint left" style="color:var(--fg)">${esc(liveErr)}</div><button class="btn sm" id="glive">tentar de novo</button>`;
+    if(!live)return `<button class="btn sm" id="glive">${ico("nav",15)} ver linhas e valor ao vivo</button><div class="hint left" style="margin-top:6px">consulta o google para ${day?esc(day.d.split("-").reverse().slice(0,2).join("/")):"agora"}${it.time?", "+esc(it.time):""}.</div>`;
+    const L=live,fare=L.fare!=null&&L.fare>0?`${money(L.fare)}, estimativa do google`:"valor não informado pelo google";
+    return `<div class="ficha"><div class="fr"><span>google</span><div><b>${L.min} min</b>, ${esc(fare)}${L.cached?`<div class="muted" style="font-size:12px">guardado neste aparelho</div>`:""}</div></div></div>
+      <div class="steps" style="margin:10px 0">${L.steps.map((st,i)=>`${i===0?`<div class="stp"><span class="sl">embarque</span><span class="sn">${esc(st.from)}<span class="muted" style="font-weight:400"> ${esc(hhmm(st.dep,c))}</span></span></div>`:""}
+        <div class="sline" style="--c:${st.c}"><span class="chip${st.bus?" bus":""}" style="--c:${st.c};--ct:${ink(st.c)}">${st.bus||!st.code?"":`<span class="code">${esc(st.code)}</span>`}${esc(st.n)}</span>${st.head?`<span class="to"> sentido ${esc(st.head)}</span>`:""}</div>
+        <div class="stp"><span class="sl">${i<L.steps.length-1?"baldeação":"desça"}</span><span class="sn">${esc(st.to)}<span class="muted" style="font-weight:400"> ${esc(hhmm(st.arr,c))}</span></span></div>`).join("")}</div>
+      ${day&&org.k!=="gps"&&L.steps.length?`<button class="btn sm" id="guse">usar este trajeto no roteiro</button>`:""}`};
   const draw=()=>{
     const ready=org.k!=="gps"||org.q;
     $("#rbox").innerHTML=`<div class="gh"><div><div class="eyebrow">rota</div><h3>${esc(label)}</h3></div><button class="iconbtn" id="rx" aria-label="fechar">${ico("x",20)}</button></div>
      <div class="seg" style="margin-top:14px">${[["r","transporte"],["w","a pé"],["d","carro"]].map(([v,l])=>`<button data-m="${v}" aria-pressed="${mode===v}">${l}</button>`).join("")}</div>
      <div class="gchips" style="margin:12px 0 0"><span class="muted" style="align-self:center;font-size:13px">saindo de</span>${opts.map(o=>`<button class="gchip" data-o="${o.k}" aria-pressed="${org.k===o.k}">${esc(o.l)}</button>`).join("")}</div>
      ${it.leg?`<div class="ficha"><div class="fr"><span>no seu roteiro</span><div>${legBody(it.leg)}</div></div></div>`:""}
+     ${mode==="r"&&ready?`<div class="live" id="live">${liveHTML()}</div>`:""}
      ${ready?`<iframe class="mapframe" src="${embedURL({s:org.q,d:dest,m:mode})}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="rota"></iframe>`:`<div class="mapframe wait">buscando sua localização…</div>`}
      <div class="hint left" style="margin-top:8px">o google mostra as linhas, os horários e os valores de agora.</div>
      <div class="acts" style="flex-wrap:wrap"><a class="btn sm" href="${dirURL(org.q,dest,mode)}" target="_blank" rel="noopener">abrir no app do google maps ↗</a></div>`;
     $("#rx").onclick=close;
+    const gl=$("#glive");if(gl)gl.onclick=async()=>{loading=true;liveErr="";$("#live").innerHTML=liveHTML();
+      try{live=await gRoute(org.q,dest,iso)}catch(e){liveErr=e.message||"não consegui consultar o google agora."}loading=false;draw()};
+    const gu=$("#guse");if(gu)gu.onclick=async()=>{const sg=live.steps.map(st=>{const k="g:"+slug(st.n);const o={n:st.n,c:st.c,code:st.code||st.n.slice(0,2).toUpperCase()};if(st.bus)o.bus=1;LINES[k]=o;return [k,st.to,st.from,o]});
+      const leg={m:"t",min:live.min,km:live.km,fare:live.fare>0?live.fare:(it.leg&&it.leg.fare!=null?it.leg.fare:null),segs:sg};
+      const dk=c.id+"|"+day.d;if(it.novo){const nv=((ED.novos||{})[dk]||[]).find(x=>x.id===it._k);const item={...it};["_k","_n","novo"].forEach(x=>delete item[x]);item.leg=leg;await saveOps([{t:"it+",d:dk,v:{id:it._k,after:nv?nv.after:"",item}}])}
+      else await saveOps([{t:"it",k:dk+"|"+it._n,v:{leg}}]);close()};
     document.querySelectorAll("#rbox [data-m]").forEach(b=>b.onclick=()=>{mode=b.dataset.m;draw()});
-    document.querySelectorAll("#rbox [data-o]").forEach(b=>b.onclick=()=>{const o=opts.find(x=>x.k===b.dataset.o);org=o;draw();
+    document.querySelectorAll("#rbox [data-o]").forEach(b=>b.onclick=()=>{const o=opts.find(x=>x.k===b.dataset.o);org=o;live=null;liveErr="";draw();
       if(o.k==="gps"&&!o.q){if(!navigator.geolocation){toast("este aparelho não informa a localização");org=opts[0];draw();return}
         navigator.geolocation.getCurrentPosition(p=>{o.q=`${p.coords.latitude},${p.coords.longitude}`;if(org===o)draw()},()=>{toast("não consegui sua localização");org=opts[0];draw()},{timeout:9000,maximumAge:60000})}})};
   draw();
@@ -1102,7 +1143,7 @@ function city(){
   document.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{const i=+b.dataset.o;view.open=view.open===i?null:i;view.vid=null;city()});
   document.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{const k=key(+b.dataset.d);if(done[k])delete done[k];else done[k]=1;store.set("feito",done);view.open=null;city()});
   document.querySelectorAll("[data-ph]").forEach(b=>b.onclick=()=>{const it=day.items[+b.dataset.ph];editPhoto(ek(it),it.home?c.home.n:it.n,city,wikiFor(it)||`${it.n} ${c.area}`)});
-  document.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{const i=+b.dataset.r;routeSheet(c,day.items[i],prevStop(day,i))});
+  document.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{const i=+b.dataset.r;routeSheet(c,day.items[i],prevStop(day,i),day)});
   document.querySelectorAll("[data-h]").forEach(b=>b.onclick=()=>hospSheet(c));
   document.querySelectorAll("[data-ed]").forEach(b=>b.onclick=()=>editStop(c,day,day.items[+b.dataset.ed]));
   const as=$("#addstop");if(as)as.onclick=()=>editStop(c,day,null);
