@@ -303,7 +303,7 @@ h1,h2,h3,.eyebrow,.lbl,.btn,.bar-title,.city .name,.city .dates,.city .stat,.dch
 .pin{width:28px;height:28px;border-radius:14px;background:var(--accent,#24396B);color:var(--accent-ink,#fff);border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);display:grid;place-items:center;font:700 13px system-ui,sans-serif}
 .pin.home{background:#111;color:#fff;border-radius:9px}
 .pinwrap{background:none;border:0}
-.leaflet-container{font-family:inherit}.leaflet-popup-content{margin:12px 14px}.pbtn{margin-top:8px;height:34px}
+.leaflet-container{font-family:inherit}.leaflet-control-attribution{font-size:10px!important}.leaflet-container img{max-width:none!important}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.segrow{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;align-items:center}.segrow .field{height:42px;padding:0 8px;font-size:14px;min-width:0}.leaflet-popup-content{margin:12px 14px}.pbtn{margin-top:8px;height:34px}
 </style>
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
 </head>
@@ -330,15 +330,94 @@ const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){retu
 let done=store.get("feito")||{};
 
 const isStop=i=>i.n||i.home;
+/* ===== edição de paradas: editar, incluir, apagar, mover ===== */
+const EFFC=new WeakMap();
+function effDay(c,day){
+  const dk=c.id+"|"+day.d,sig=JSON.stringify([ED.item||{},(ED.novos||{})[dk]||[],(ED.dels||{})[dk]||[],(ED.ordem||{})[dk]||null]),hit=EFFC.get(day);
+  if(hit&&hit.sig===sig)return hit.val;
+  const dels=(ED.dels||{})[dk]||[],nov=(ED.novos||{})[dk]||[],ord=(ED.ordem||{})[dk];
+  let L=day.items.map((it,i)=>{const o={...it,_k:String(i)};if(it.n||it.home)o._n=it.home?"home":it.n;
+    const ov=o._n&&(ED.item||{})[dk+"|"+o._n];if(ov)Object.assign(o,ov);return o}).filter(x=>!dels.includes(x._k));
+  nov.forEach(nv=>{const o={...nv.item,_k:nv.id,_n:nv.id,novo:1},ov=(ED.item||{})[dk+"|"+nv.id];if(ov)Object.assign(o,ov);
+    const at=nv.after===""?-1:L.findIndex(x=>x._k===nv.after);if(nv.after!==""&&at<0)L.push(o);else L.splice(at+1,0,o)});
+  if(ord&&ord.length)L=L.map((x,i)=>({x,i,o:ord.indexOf(x._k)})).sort((a,b)=>(a.o<0?1e6+a.i:a.o)-(b.o<0?1e6+b.i:b.o)).map(z=>z.x);
+  const val={...day,items:L};EFFC.set(day,{sig,val});return val}
+const legOf=f=>{const mode=f.mode;if(!mode||mode==="none")return null;const min=+f.min||0,km=+f.km||0;
+  if(mode==="w")return {m:"w",min,km};if(mode==="tour")return {m:"tour",min,km,label:f.label||"De carro com a agência"};
+  const segs=(f.segs||[]).filter(s=>s.k&&LINES[s.k]).map(s=>s.f?[s.k,s.to||"",s.f]:[s.k,s.to||""]);
+  return {m:"t",min,km,fare:f.fare===""||f.fare==null?null:+f.fare,segs}};
+function editStop(c,day,it,afterK){
+  const isNew=!it,home=it&&it.home,dk=c.id+"|"+day.d;
+  const f={n:it?(it.n||""):"",ja:it?(it.ja||""):"",time:it?(it.time||""):"",info:it?(it.info||""):"",note:it?(it.note||""):"",fee:it?(it.fee||""):"",
+    p:it&&it.p?it.p.join(", "):"",mode:"none",min:"",km:"",fare:"",segs:[],label:"",after:afterK==null?(day.items.length?day.items[day.items.length-1]._k:""):afterK};
+  const lg=it&&it.leg;if(lg){f.mode=lg.m;f.min=lg.min||"";f.km=lg.km||"";if(lg.m==="t"){f.fare=lg.fare==null?"":lg.fare;f.segs=(lg.segs||[]).map(([k,to,fr])=>({k,to,f:fr||""}))}if(lg.m==="tour")f.label=lg.label||""}
+  const lineOpts=Object.keys(LINES).map(k=>`<option value="${k}">${k} ${esc(LINES[k].n)}</option>`).join("");
+  const close=sheet("<div id=\"ebox\"></div>",()=>{city()});
+  let confirmDel=false;
+  const draw=()=>{
+    const stops=day.items.filter(isStop);
+    $("#ebox").innerHTML=`<div class="gh"><div style="flex:1;min-width:0"><div class="eyebrow">${isNew?"nova parada":"editar parada"}</div><h3>${esc(home?c.home.n:(f.n||"sem nome"))}</h3></div><button class="iconbtn" id="ex" aria-label="fechar">${ico("x",20)}</button></div>
+    <div class="frm">
+    ${home?"":`<label class="lbl2">nome<input class="field" data-e="n" value="${esc(f.n)}" autocomplete="off"></label>
+     <label class="lbl2">no idioma local (${esc(c.lang||"")})<input class="field ja" data-e="ja" value="${esc(f.ja)}" autocomplete="off"></label>
+     <div class="two"><label class="lbl2">horário<input class="field" data-e="time" value="${esc(f.time)}" placeholder="ex: 16h" autocomplete="off"></label>
+      <label class="lbl2">ingresso<input class="field" data-e="fee" value="${esc(f.fee)}" placeholder="ex: ¥2.200" autocomplete="off"></label></div>
+     <label class="lbl2">funcionamento ou info<input class="field" data-e="info" value="${esc(f.info)}" placeholder="ex: 9h às 21h" autocomplete="off"></label>
+     <label class="lbl2">nota<textarea class="field area" rows="2" data-e="note">${esc(f.note)}</textarea></label>
+     <label class="lbl2">coordenadas ou link do google maps<input class="field" data-e="p" value="${esc(f.p)}" placeholder="35.6595, 139.7005" autocomplete="off" autocapitalize="off"></label>
+     <div class="acts" style="margin:0"><button class="btn sm" id="egeo">achar pelo nome</button><span class="hint left" id="egi" style="margin:0"></span></div>`}
+     <div class="lbl" style="margin:10px 0 0">como chegar até aqui</div>
+     <div class="seg">${[["none","sem trecho"],["w","a pé"],["t","transporte"],["tour","carro"]].map(([v,l])=>`<button data-mode="${v}" aria-pressed="${f.mode===v}">${l}</button>`).join("")}</div>
+     ${f.mode!=="none"?`<div class="two"><label class="lbl2">minutos<input class="field" inputmode="numeric" data-e="min" value="${esc(f.min)}"></label><label class="lbl2">km<input class="field" inputmode="decimal" data-e="km" value="${esc(f.km)}"></label></div>`:""}
+     ${f.mode==="t"?`<label class="lbl2">valor em ienes<input class="field" inputmode="numeric" data-e="fare" value="${esc(f.fare)}" placeholder="ex: 350"></label>
+      ${f.segs.map((s,i)=>`<div class="segrow"><select class="field" data-sk="${i}"><option value="">linha</option>${lineOpts.replace(`value="${s.k}"`,`value="${s.k}" selected`)}</select>
+        <input class="field" data-sf="${i}" value="${esc(s.f||"")}" placeholder="embarque${i?" (opcional)":""}" autocomplete="off"><input class="field" data-st="${i}" value="${esc(s.to||"")}" placeholder="desça em" autocomplete="off"><button class="gx" data-srm="${i}" aria-label="remover linha">${ico("x",16)}</button></div>`).join("")}
+      <div class="acts" style="margin:0"><button class="btn sm" id="eaddseg">+ linha</button></div>`:""}
+     ${f.mode==="tour"?`<label class="lbl2">descrição<input class="field" data-e="label" value="${esc(f.label)}" autocomplete="off"></label>`:""}
+     ${isNew?`<label class="lbl2">inserir depois de<select class="field" data-e="after"><option value="">no início do dia</option>${day.items.filter(isStop).map(x=>`<option value="${x._k}"${f.after===x._k?" selected":""}>${esc(x.home?c.home.n:x.n)}</option>`).join("")}</select></label>`:""}
+    </div><div class="pmsg" id="pmsg" aria-live="polite"></div>
+    <div class="acts" style="flex-wrap:wrap"><button class="btn go" id="esave" style="flex:1">salvar</button>
+     ${isNew||home?"":`<button class="btn sm" id="eup" aria-label="mover para cima">subir</button><button class="btn sm" id="edown" aria-label="mover para baixo">descer</button><button class="btn sm" id="edel">${confirmDel?"toque de novo para apagar":"apagar"}</button>`}</div>`;
+    bind()};
+  const grab=()=>{document.querySelectorAll("#ebox [data-e]").forEach(e=>f[e.dataset.e]=e.value);
+    document.querySelectorAll("#ebox [data-sk]").forEach(e=>f.segs[+e.dataset.sk].k=e.value);
+    document.querySelectorAll("#ebox [data-sf]").forEach(e=>f.segs[+e.dataset.sf].f=e.value.trim());
+    document.querySelectorAll("#ebox [data-st]").forEach(e=>f.segs[+e.dataset.st].to=e.value.trim())};
+  const msg=t=>{const e=$("#pmsg");if(e)e.textContent=t};
+  const geo=async()=>{grab();if(!f.n.trim())return msg("escreva o nome primeiro.");const gi=$("#egi");if(gi)gi.textContent="buscando…";
+    try{const r=await Promise.race([fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&q="+enc(f.n+", "+c.area)).then(r=>r.json()),new Promise((_,j)=>setTimeout(j,6000))]);
+      if(r&&r[0]){f.p=(+r[0].lat).toFixed(5)+", "+(+r[0].lon).toFixed(5);draw();const g=$("#egi");if(g)g.textContent="achei, confira no mapa depois.";return true}
+      if(gi)gi.textContent="não achei, cole um link do google maps."}catch(e){if(gi)gi.textContent="sem resposta, cole um link do google maps."}return false};
+  const bind=()=>{
+    $("#ex").onclick=close;
+    document.querySelectorAll("#ebox [data-mode]").forEach(b=>b.onclick=()=>{grab();f.mode=b.dataset.mode;if(f.mode==="t"&&!f.segs.length)f.segs.push({k:"",to:"",f:""});draw()});
+    document.querySelectorAll("#ebox [data-srm]").forEach(b=>b.onclick=()=>{grab();f.segs.splice(+b.dataset.srm,1);draw()});
+    const as=$("#eaddseg");if(as)as.onclick=()=>{grab();f.segs.push({k:"",to:"",f:""});draw()};
+    const g=$("#egeo");if(g)g.onclick=geo;
+    $("#esave").onclick=async()=>{grab();
+      if(!home&&!f.n.trim())return msg("dê um nome para a parada.");
+      let p=null;if(!home&&f.p.trim()){p=parseMapsLink(f.p)||parseCoords(f.p);if(!p)return msg("não entendi as coordenadas. use 35.6595, 139.7005 ou um link do google maps.")}
+      if(!home&&!p&&isNew){msg("procurando as coordenadas…");await geo();p=parseCoords(f.p)}
+      const v={leg:legOf(f)};if(!home){Object.assign(v,{n:f.n.trim(),ja:f.ja.trim(),time:f.time.trim(),info:f.info.trim(),note:f.note.trim(),fee:f.fee.trim(),p:p||null})}
+      if(isNew){const id="n"+Date.now().toString(36);await saveOps([{t:"it+",d:dk,v:{id,after:f.after,item:v}}])}
+      else if(it.novo){const nv=((ED.novos||{})[dk]||[]).find(x=>x.id===it._k);await saveOps([{t:"it+",d:dk,v:{id:it._k,after:nv?nv.after:"",item:v}}])}
+      else await saveOps([{t:"it",k:dk+"|"+it._n,v}]);
+      close()};
+    const mv=async dir=>{const ks=day.items.map(x=>x._k),i=ks.indexOf(it._k);let j=i+dir;while(j>=0&&j<ks.length&&!isStop(day.items[j]))j+=dir;if(j<0||j>=ks.length)return msg("já está no "+(dir<0?"início":"fim")+".");
+      [ks[i],ks[j]]=[ks[j],ks[i]];await saveOps([{t:"ord",d:dk,keys:ks}]);close()};
+    const u=$("#eup");if(u)u.onclick=()=>mv(-1);const dn=$("#edown");if(dn)dn.onclick=()=>mv(1);
+    const de=$("#edel");if(de)de.onclick=async()=>{if(!confirmDel){grab();confirmDel=true;draw();return}await saveOps([{t:"it-",d:dk,k:it._k}]);close()}};
+  draw()}
+
 const legs=day=>[...day.items.filter(i=>i.leg&&!i.alt).map(i=>i.leg),...(day.end?[day.end]:[])];
 const dayFare=day=>legs(day).reduce((s,l)=>s+(l.fare||0),0);
 const dayKm=day=>legs(day).reduce((s,l)=>s+(l.km||0),0);
-const cityFare=c=>c.days.reduce((s,d)=>s+dayFare(d),0);
+const cityFare=c=>c.days.reduce((s,d)=>s+dayFare(effDay(c,d)),0);
 
 const ink=hex=>{const n=parseInt(hex.slice(1),16),r=n>>16&255,g=n>>8&255,b=n&255;return (r*299+g*587+b*114)/1000>150?"#14161A":"#FFFFFF"};
 function chip(k){const L=LINES[k];return `<span class="chip${L.bus?" bus":""}" style="--c:${L.c};--ct:${ink(L.c)}">${L.bus?"":`<span class="code">${k}</span>`}${esc(L.n)}</span>`}
 const LEGCTX=new WeakMap();
-function buildCtx(c){const hs=(hosp(c).estacao||c.home.sta||"").trim()||null;c.days.forEach(day=>{let last=day.start?hs:null,prev=day.start?c.home.n:null;
+function buildCtx(c){const hs=(hosp(c).estacao||c.home.sta||"").trim()||null;c.days.map(d=>effDay(c,d)).forEach(day=>{let last=day.start?hs:null,prev=day.start?c.home.n:null;
   const st=l=>l&&l.m==="t"&&l.segs&&l.segs.length?l.segs[l.segs.length-1][1]:null;
   day.items.forEach(it=>{if(it.leg)LEGCTX.set(it.leg,{from:last,prev});
     if(it.n||it.home){prev=it.home?c.home.n:it.n;last=it.home?(st(it.leg)||hs):st(it.leg)}});
@@ -400,14 +479,14 @@ function shrink(blob,m=1400,q=.84){return new Promise(res=>{const u=URL.createOb
     cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(u);cv.toBlob(b=>res(b||blob),"image/jpeg",q)};
   im.onerror=()=>{URL.revokeObjectURL(u);res(null)};im.src=u})}
 /* edições compartilhadas: edicoes.json no GitHub; sem token, ficam neste aparelho */
-let ED={capas:{},fotos:{},videos:{},ocultos:{},guia:{}},ED_TEXT="",DATA_TEXT="";
+let ED={capas:{},fotos:{},videos:{},ocultos:{},guia:{},item:{},novos:{},dels:{},ordem:{}},ED_TEXT="",DATA_TEXT="";
 /* Firebase: edições do grupo em tempo real */
 const FB_CFG={apiKey:"AIzaSyBOHt2ySoWXgAqo8ZqNIxGHUbWnfeacnrc",authDomain:"roteiro-c271b.firebaseapp.com",projectId:"roteiro-c271b",
   storageBucket:"roteiro-c271b.firebasestorage.app",messagingSenderId:"979387042161",appId:"1:979387042161:web:2851d1c5da95b3fd9bced0"};
 let FB=null,USER=null,ROLE={editor:false,admin:false,emails:[]},JSON_ED=null,FS_ED=null;const FOTOS={};
 const canShare=()=>!!(FB&&USER&&ROLE.editor);
 const imgSrc=u=>!u?null:u.startsWith("fb:")?(FOTOS[u.slice(3)]||null):u;
-const norm=e=>({capas:e.capas||{},fotos:e.fotos||{},videos:e.videos||{},ocultos:e.ocultos||{},guia:e.guia||{},viagens:e.viagens||{}});
+const norm=e=>({capas:e.capas||{},fotos:e.fotos||{},videos:e.videos||{},ocultos:e.ocultos||{},guia:e.guia||{},viagens:e.viagens||{},item:e.item||{},novos:e.novos||{},dels:e.dels||{},ordem:e.ordem||{}});
 const localOps=()=>store.get("ed-ops")||[];
 function applyOp(e,o){
   if(o.t==="capa"){if(o.url)e.capas[o.c]=o.url;else delete e.capas[o.c]}
@@ -417,10 +496,16 @@ function applyOp(e,o){
   if(o.t==="trip"){if(o.v)e.viagens[o.id]={...(e.viagens[o.id]||{}),...o.v};else e.viagens[o.id]={del:1}}
   if(o.t==="g+"){const g=e.guia[o.k]=e.guia[o.k]||{};g[o.kind]=(g[o.kind]||[]).concat([o.v])}
   if(o.t==="g-"){const g=e.guia[o.k]||{},l=g[o.kind]||[];if(l.some(x=>x.id===o.id))g[o.kind]=l.filter(x=>x.id!==o.id);else e.ocultos[o.k]=[...(e.ocultos[o.k]||[]),o.id]}
+  if(o.t==="it"){e.item=e.item||{};e.item[o.k]={...(e.item[o.k]||{}),...o.v}}
+  if(o.t==="it+"){e.novos=e.novos||{};const l=e.novos[o.d]=(e.novos[o.d]||[]).filter(x=>x.id!==o.v.id);const prev=(e.novos[o.d]||[]);l.push(o.v)}
+  if(o.t==="it-"){e.novos=e.novos||{};e.dels=e.dels||{};e.ordem=e.ordem||{};const nl=(e.novos[o.d]||[]);
+    if(nl.some(x=>x.id===o.k))e.novos[o.d]=nl.filter(x=>x.id!==o.k);else e.dels[o.d]=[...(e.dels[o.d]||[]),o.k];
+    if(e.ordem[o.d])e.ordem[o.d]=e.ordem[o.d].filter(x=>x!==o.k)}
+  if(o.t==="ord"){e.ordem=e.ordem||{};e.ordem[o.d]=o.keys}
   return e}
 const clone=o=>JSON.parse(JSON.stringify(o));
 function recompute(){const a=norm(JSON_ED||{}),b=norm(FS_ED||{}),e=norm({});
-  for(const k of ["capas","fotos","videos","ocultos","guia","viagens"])e[k]=clone({...a[k],...b[k]});
+  for(const k of ["capas","fotos","videos","ocultos","guia","viagens","item","novos","dels","ordem"])e[k]=clone({...a[k],...b[k]});
   localOps().forEach(o=>applyOp(e,o));ED=e}
 async function loadEd(){
   try{const r=await fetch("edicoes.json?v="+Date.now());ED_TEXT=r.ok?await r.text():"{}"}catch(e){ED_TEXT=ED_TEXT||"{}"}
@@ -584,7 +669,7 @@ const mapsAt=p=>`https://www.google.com/maps/search/?api=1&query=${p[0]},${p[1]}
 function parseCoords(u){if(!u)return null;const m=u.match(/(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);return m?[+m[1],+m[2]]:null}
 /* ===== dados do guia (tudo vira uma lista de mídias) ===== */
 function guideData(c,it,k){
-  const base=(typeof GUIA!=="undefined"&&GUIA[c.id+"|"+it.n])||{},hid=ED.ocultos[k]||[],ex=ED.guia[k]||{},out=[];
+  const base=(typeof GUIA!=="undefined"&&GUIA[c.id+"|"+(it._n&&!it.novo?it._n:it.n)])||{},hid=ED.ocultos[k]||[],ex=ED.guia[k]||{},out=[];
   const old=(kind,type)=>{
     (base[kind]||[]).forEach((x,i)=>out.push({id:"b"+kind[0]+i,type,text:x.t,p:x.p,img:x.img,kind,src:"base"}));
     (ex[kind]||[]).forEach(x=>out.push({id:x.id,type,text:x.t,p:x.p,img:x.img,kind,src:"ed"}))};
@@ -962,10 +1047,10 @@ function openCity(id,dayIdx){
 }
 
 function city(){
-  const c=view.city,day=c.days[view.day],today=jstToday();buildCtx(c);
+  const c=view.city,day=effDay(c,c.days[view.day]),today=jstToday();buildCtx(c);
   store.set("dia-"+c.id,view.day);
   const D=dt(day.d);
-  const key=i=>`${c.id}-${day.d}-${i}`,ek=it=>`${c.id}|${day.d}|${it.home?"home":it.n}`;
+  const key=i=>`${c.id}-${day.d}-${(day.items[i]||{})._k??i}`,ek=it=>`${c.id}|${day.d}|${it._n||(it.home?"home":it.n)}`;
   const nextIdx=day.items.findIndex((it,i)=>isStop(it)&&!done[key(i)]);
   const fare=dayFare(day),alt=day.items.find(i=>i.alt);
   const missing=legs(day).some(l=>l.m==="t"&&l.fare==null);
@@ -993,7 +1078,7 @@ function city(){
      ${nx.note?`<p>${esc(nx.note)}</p>`:""}
      <div class="acts"><button class="btn go" data-r="${nextIdx}">Ir</button>${nx.home?`<button class="btn" data-h aria-label="hospedagem">${ico("airbnb",20)}</button>`:""}
       <button class="btn" data-ja="${nextIdx}" aria-label="Mostrar no idioma local">${c.lang}</button>
-      <button class="btn" data-d="${nextIdx}">Feito</button></div>
+      <button class="btn" data-d="${nextIdx}">Feito</button>${view.edit?`<button class="btn" data-ed="${nextIdx}" aria-label="editar parada">${ICON.pen}</button>`:""}</div>
      ${!nx.home&&gCount(guideData(c,nx,ek(nx)))?`<button class="btn wide guidebtn" data-g="${nextIdx}">Guia do lugar<span class="cnt">${gCount(guideData(c,nx,ek(nx)))}</span></button>`:""}</section>`
    :`<section class="focus alldone"><div class="eyebrow">Dia concluído</div><p>Todas as paradas foram marcadas.</p></section>`;
 
@@ -1008,6 +1093,7 @@ function city(){
       ${alt?`<div><b>${money(fare-legs(day).find(l=>l.segs&&l.segs[0]&&l.segs[0][0]==="B01").fare+alt.leg.fare)}</b><span class="muted">no plano B</span></div>`:""}</div></div>
     ${focus}
     <ol class="tl">${tl}</ol>
+    ${view.edit?`<div class="acts" style="margin:6px 0 0"><button class="btn" id="addstop">${ico("plus",16)} nova parada</button></div>`:""}
     <details class="map" id="mapd"${store.get("mapa")?" open":""}><summary>Mapa do dia</summary><div id="mapreal" class="mapbox"></div></details>
    </div>`;
 
@@ -1018,6 +1104,8 @@ function city(){
   document.querySelectorAll("[data-ph]").forEach(b=>b.onclick=()=>{const it=day.items[+b.dataset.ph];editPhoto(ek(it),it.home?c.home.n:it.n,city,wikiFor(it)||`${it.n} ${c.area}`)});
   document.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{const i=+b.dataset.r;routeSheet(c,day.items[i],prevStop(day,i))});
   document.querySelectorAll("[data-h]").forEach(b=>b.onclick=()=>hospSheet(c));
+  document.querySelectorAll("[data-ed]").forEach(b=>b.onclick=()=>editStop(c,day,day.items[+b.dataset.ed]));
+  const as=$("#addstop");if(as)as.onclick=()=>editStop(c,day,null);
   document.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{const it=day.items[+b.dataset.g];guide(c,it,ek(it),it.home?c.home.n:it.n)});
   bindTools();
   document.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{view.vid=b.dataset.v||null;city()});
@@ -1030,13 +1118,13 @@ function city(){
     if(day.end)P.push({p:c.home.p,home:1,t:c.home.n,leg:day.end});
     if(P.length<2){box.innerHTML="";return}
     box.innerHTML='<div class="hint left" style="padding:16px">carregando mapa…</div>';
-    try{if(!window.L){if(!document.getElementById("lfcss")){const l=document.createElement("link");l.id="lfcss";l.rel="stylesheet";l.href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css";document.head.appendChild(l)}
+    try{if(!window.L){if(!document.getElementById("lfcss")){const l=document.createElement("link");l.id="lfcss";l.rel="stylesheet";l.href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css";await new Promise(r=>{l.onload=r;l.onerror=r;document.head.appendChild(l);setTimeout(r,4000)})}
         await loadScript("https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js")}}
     catch(e){box.innerHTML='<div class="hint left" style="padding:16px">não consegui carregar o mapa agora.</div>';box.dataset.on="";return}
     box.innerHTML='<div id="lmap" class="lmap"></div>';
-    const m=box._m=L.map("lmap",{zoomControl:false,attributionControl:true,tap:true});
+    const m=box._m=L.map("lmap",{zoomControl:false,attributionControl:false,tap:true});
     L.control.zoom({position:"bottomright"}).addTo(m);
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{maxZoom:19,subdomains:"abcd",attribution:"© OpenStreetMap © CARTO"}).addTo(m);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19}).addTo(m);L.control.attribution({prefix:false}).addAttribution("© OpenStreetMap").addTo(m);
     for(let i=1;i<P.length;i++){const l=P[i].leg||{m:"w"},tr=l.m==="t"&&l.segs&&l.segs.length;
       L.polyline([P[i-1].p,P[i].p],{color:tr?LINES[l.segs[0][0]].c:"#6b7280",weight:tr?5:3,opacity:.9,dashArray:tr?null:"2 7",lineCap:"round"}).addTo(m)}
     const seen={};
@@ -1071,7 +1159,7 @@ function city(){
       <a class="btn sm" href="${seeURL(it)}" target="_blank" rel="noopener">Fotos</a>
       <button class="btn sm" data-ja="${i}">${c.lang}</button>
       <button class="btn sm" data-g="${i}">Guia${(gn=gCount(guideData(c,it,ek(it))))?` <span class="cnt">${gn}</span>`:""}</button>
-      <button class="btn sm" data-d="${i}">${isDone?"Desfazer":"Feito"}</button></div></div>`;
+      <button class="btn sm" data-d="${i}">${isDone?"Desfazer":"Feito"}</button>${view.edit?`<button class="btn sm" data-ed="${i}">${ICON.pen} editar</button>`:""}</div></div>`;
   }
 }
 
