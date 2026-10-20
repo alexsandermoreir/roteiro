@@ -554,6 +554,20 @@ let toastT;function toast(t,act){const el=$("#toast");el.innerHTML=`<span>${esc(
 const rerender=()=>view.city?city():CUR?home():trips();
 function reloadApp(){const h=location.hash;location.replace(location.pathname+"?v="+Date.now()+h)}
 
+/* google imagens dentro do app (Programmable Search Element) */
+const GCX="9262b34147cbe4241";
+let gReady=null,gPending=null;
+function googleImages(q){
+  if(!GCX)return Promise.resolve(null);
+  if(!gReady)gReady=new Promise((res,rej)=>{
+    window.__gcse={parsetags:"explicit",initializationCallback:()=>{
+      let box=document.getElementById("gcsebox");if(!box){box=document.createElement("div");box.id="gcsebox";box.hidden=true;document.body.appendChild(box)}
+      google.search.cse.element.render({div:"gcsebox",tag:"searchresults-only",gname:"fotos",attributes:{enableImageSearch:true,defaultToImageSearch:true,disableWebSearch:true,imageSearchResultSetSize:"20",safeSearch:"off",enableHistory:false}});res()},
+      searchCallbacks:{image:{ready:(name,qq,promos,results)=>{if(gPending){gPending(results||[]);gPending=null}return true}}}};
+    loadScript("https://cse.google.com/cse.js?cx="+GCX).catch(rej)});
+  return gReady.then(()=>new Promise(res=>{const t=setTimeout(()=>{gPending=null;res(null)},8000);
+    gPending=r=>{clearTimeout(t);res(r.map(x=>{const full=(x.image&&x.image.url)||x.url,thumb=(x.thumbnailImage&&x.thumbnailImage.url)||full;return full?{full,thumb}:null}).filter(Boolean))};
+    google.search.cse.element.getElement("fotos").execute(q)}))}
 function editPhoto(k,name,after,query){
   query=query||name;
   let cur=photos[k]||imgSrc(k.startsWith("capa-")?ED.capas[k.slice(5)]:ED.fotos[k]);
@@ -561,8 +575,8 @@ function editPhoto(k,name,after,query){
     ${cur?`<img class="ph" src="${esc(cur)}" alt="">`:""}
     <div class="linkrow"><input id="psearch" class="field" type="search" value="${esc(query)}" autocomplete="off" aria-label="Pesquisar fotos"><button class="btn" id="pgo">Buscar</button></div>
     <div class="pres" id="pres" aria-live="polite"></div>
-    <a class="btn sm" id="pgoogle" href="#" target="_blank" rel="noopener">abrir no bing imagens ↗</a>
-    <div class="hint left" style="margin-top:8px">para fotos do bing, toque e segure a foto lá, copie e volte aqui para colar.</div>
+    <a class="btn sm" id="pgoogle" href="#" target="_blank" rel="noopener">abrir no google imagens ↗</a>
+    <div class="hint left" style="margin-top:8px">para as mesmas fotos do google, abra o link acima, toque e segure a foto, copie e volte aqui para colar.</div>
     <div class="acts" style="margin-top:6px"><button class="btn go" id="ppaste" style="flex:1">Colar</button><label class="btn" for="pfile">Galeria</label><input id="pfile" type="file" accept="image/*" hidden></div>
     <div class="linkrow" style="margin-top:8px"><input id="purl" class="field" type="text" inputmode="url" placeholder="Ou cole o link da imagem" autocomplete="off" autocapitalize="off"><button class="btn" id="pok">Usar</button></div>
     <div class="pmsg" id="pmsg" aria-live="polite"></div>
@@ -584,13 +598,14 @@ function editPhoto(k,name,after,query){
   document.addEventListener("paste",onPaste);
   $("#pfile").onchange=e=>{const f=e.target.files[0];if(f)setBlob(f)};
   $("#pok").onclick=()=>setLink($("#purl").value);
-  const gUrl=()=>"https://www.bing.com/images/search?q="+encodeURIComponent($("#psearch").value);
+  const gUrl=()=>"https://www.google.com/search?tbm=isch&q="+encodeURIComponent($("#psearch").value);
   $("#pgoogle").href=gUrl();$("#psearch").oninput=()=>$("#pgoogle").href=gUrl();
   const show=(list,src)=>{const box=$("#pres");
     box.innerHTML=list.length?list.map((x,i)=>`<button class="pick" data-i="${i}"><img src="${esc(x.thumb)}" alt="" loading="lazy"></button>`).join("")+`<div class="hint left">fotos: ${src}</div>`
       :`<div class="hint left">nada encontrado. tente outro nome.</div>`;
     box.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{const x=list[+b.dataset.i];setLink(x.full,x.thumb)})};
   const search=async()=>{const q=$("#psearch").value.trim();if(!q)return;$("#pres").innerHTML=`<div class="hint left">buscando fotos…</div>`;
+    const g=await googleImages(q).catch(()=>null);if(g&&g.length)return show(g,"google imagens");
     const T=(u)=>Promise.race([fetch(u).then(r=>r.json()),new Promise((_,j)=>setTimeout(()=>j(0),7000))]);
     const [ov,wm]=await Promise.allSettled([
       T("https://api.openverse.org/v1/images/?page_size=14&mature=false&q="+encodeURIComponent(q)),
