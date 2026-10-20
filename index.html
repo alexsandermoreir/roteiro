@@ -100,6 +100,10 @@ a{color:inherit}
 .chip.bus{padding-left:12px}
 .code{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 4px;border-radius:11px;background:#fff;color:#14161A;font:800 11px/1 var(--sans);letter-spacing:0}
 .to{color:var(--muted)}
+.steps{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.stp{display:grid;grid-template-columns:78px 1fr;gap:8px;align-items:baseline}
+.stp .sl{font-size:12px;font-weight:600;color:var(--muted)}.stp .sn{font-weight:700;font-size:15px}
+.sline{padding-left:2px;border-left:3px solid var(--c);margin-left:5px;padding:2px 0 2px 12px}
 .legmeta{font-size:14px;color:var(--fg);font-weight:600;font-variant-numeric:tabular-nums;margin-top:4px}
 .legmeta .muted{font-weight:400}
 
@@ -333,10 +337,25 @@ const cityFare=c=>c.days.reduce((s,d)=>s+dayFare(d),0);
 
 const ink=hex=>{const n=parseInt(hex.slice(1),16),r=n>>16&255,g=n>>8&255,b=n&255;return (r*299+g*587+b*114)/1000>150?"#14161A":"#FFFFFF"};
 function chip(k){const L=LINES[k];return `<span class="chip${L.bus?" bus":""}" style="--c:${L.c};--ct:${ink(L.c)}">${L.bus?"":`<span class="code">${k}</span>`}${esc(L.n)}</span>`}
+const LEGCTX=new WeakMap();
+function buildCtx(c){const hs=(hosp(c).estacao||"").trim()||null;c.days.forEach(day=>{let last=day.start?hs:null,prev=day.start?c.home.n:null;
+  const st=l=>l&&l.m==="t"&&l.segs&&l.segs.length?l.segs[l.segs.length-1][1]:null;
+  day.items.forEach(it=>{if(it.leg)LEGCTX.set(it.leg,{from:last,prev});
+    if(it.n||it.home){prev=it.home?c.home.n:it.n;last=it.home?(st(it.leg)||hs):st(it.leg)}});
+  if(day.end)LEGCTX.set(day.end,{from:last,prev})})}
 function legBody(l){
   if(l.m==="w")return `<div class="walk">${dur(l.min)} a pé, ${dist(l.km)}</div>`;
   if(l.m==="tour")return `<div class="walk">${esc(l.label||"De carro com a agência")}, ${dur(l.min)}</div>`;
-  const segs=l.segs.length?l.segs.map(([k,to])=>`${chip(k)}<span class="to">até ${esc(to)}</span>`).join(""):`<span class="walk">Transporte, linhas a definir</span>`;
+  const cx=LEGCTX.get(l)||{};
+  const stp=(lab,name,note)=>`<div class="stp"><span class="sl">${lab}</span><span class="sn">${name?esc(name):`<span class="muted">estação mais próxima${cx.prev?" de "+esc(cx.prev):""}</span>`}</span></div>`;
+  let segs="";
+  if(!l.segs.length)segs=`<span class="walk">Transporte, linhas a definir</span>`;
+  else{segs=`<div class="steps">`;
+    l.segs.forEach(([k,to,fr],i)=>{const from=i===0?(fr||cx.from):(fr||l.segs[i-1][1]);
+      if(i===0)segs+=stp("embarque",from);
+      segs+=`<div class="sline" style="--c:${LINES[k].c}">${chip(k)}</div>`;
+      segs+=stp(i<l.segs.length-1?"baldeação":"desça",to)});
+    segs+=`</div>`}
   const meta=[l.fare!=null?money(l.fare):`<span class="muted">valor a definir</span>`,l.min?dur(l.min):""].filter(Boolean).join(", ");
   return `<div class="legline">${segs}</div><div class="legmeta">${meta}</div>`;
 }
@@ -625,11 +644,11 @@ function routeSheet(c,it,prev){
   if(org.k==="gps"){navigator.geolocation&&navigator.geolocation.getCurrentPosition(p=>{org.q=`${p.coords.latitude},${p.coords.longitude}`;draw()},()=>{toast("não consegui sua localização")},{timeout:9000})}
 }
 
-const HF=c=>[["endereco","endereço","area"],["ja","endereço em "+(c.lang||"idioma local"),"area"],["checkin","check-in",""],["checkout","check-out",""],["anfitriao","anfitrião",""],
+const HF=c=>[["endereco","endereço","area"],["ja","endereço em "+(c.lang||"idioma local"),"area"],["estacao","estação mais próxima (para o embarque)",""],["checkin","check-in",""],["checkout","check-out",""],["anfitriao","anfitrião",""],
   ["tel","telefone do anfitrião","tel"],["codigo","código ou senha de acesso","secret"],["wifi","wi-fi, rede e senha",""],["link","link da reserva","url"],["obs","observações","area"]];
 function hospSheet(c){
   let editing=false;
-  const close=sheet2("<div id=\"hbox\"></div>");
+  const close=sheet2("<div id=\"hbox\"></div>",()=>rerender());
   const head=`<div class="gh"><div><div class="eyebrow">${ico("airbnb",15)} hospedagem</div><h3>${esc(c.name)}</h3></div><button class="iconbtn" id="hx" aria-label="fechar">${ico("x",20)}</button></div>`;
   const draw=()=>{
     const b=$("#hbox");
@@ -942,7 +961,7 @@ function openCity(id,dayIdx){
 }
 
 function city(){
-  const c=view.city,day=c.days[view.day],today=jstToday();
+  const c=view.city,day=c.days[view.day],today=jstToday();buildCtx(c);
   store.set("dia-"+c.id,view.day);
   const D=dt(day.d);
   const key=i=>`${c.id}-${day.d}-${i}`,ek=it=>`${c.id}|${day.d}|${it.home?"home":it.n}`;
